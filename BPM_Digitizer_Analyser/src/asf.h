@@ -52,9 +52,15 @@
  * running the ASF driver selector tool. Any changes will be discarded.
  */
 
+// From module: AFEC - Analog-Front-End Controller
+#include <afec.h>
+
 // From module: Common SAM compiler driver
 #include <compiler.h>
 #include <status_codes.h>
+
+// From module: Delay routines
+#include <delay.h>
 
 // From module: Generic board support
 #include <board.h>
@@ -81,7 +87,26 @@
 // From module: SAM4E startup code
 #include <exceptions.h>
 
+// From module: Sleep manager - SAM implementation
+#include <sam/sleepmgr.h>
+#include <sleepmgr.h>
+
+// From module: Standard serial I/O (stdio) - SAM implementation
+#include <stdio_serial.h>
+
 // From module: System Clock Control - SAM4E implementation
 #include <sysclk.h>
+
+// From module: TC - Timer Counter
+#include <tc.h>
+
+// From module: UART - Univ. Async Rec/Trans
+#include <uart.h>
+
+// From module: USART - Serial interface - SAM implementation for devices with both UART and USART
+#include <serial.h>
+
+// From module: USART - Univ. Syn Async Rec/Trans
+#include <usart.h>
 
 #endif // ASF_H
