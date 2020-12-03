@@ -46,13 +46,16 @@
 #define STRING_HEADER "-- AFEC Feature Test Example --\r\n" \
 "-- "BOARD_NAME" --\r\n" \
 "-- Compiled: "__DATE__" "__TIME__" --""\r"
-
+#define fiducialInput IOPORT_CREATE_PIN(PORTA, 6)
+#define buffersize 16667
 /** ------------------------------------------------------------------------------------ */
 /** global variables       																*/
 /** ------------------------------------------------------------------------------------ */
 /** AFEC sample data */
 float g_afec0_sample_data, g_afec1_sample_data;
-
+/** buffer */
+uint16_t buffer[buffersize];
+uint16_t bufferIndex=0;
 /** The maximal digital value */
 static uint32_t g_max_digital;
 
@@ -77,14 +80,14 @@ static void configure_console(void)
 	sysclk_enable_peripheral_clock(CONSOLE_UART_ID);
 	stdio_serial_init(CONF_UART, &uart_serial_options);
 }
-static void print_sample(uint32_t sample)
+static void print_sample(uint16_t sample)
 {
 	/*uint32_t zero = 0;
 	if(usart_is_tx_ready(CONF_UART)){
 		usart_putchar(CONF_UART,sample);
 	}*/
 	//usart_write(CONF_UART,zero);
-	printf("%d ", (uint16_t)sample);
+	printf("%d\n\r", sample);
 }
 /**
  * \brief AFEC0 DRDY interrupt callback function.
@@ -93,7 +96,9 @@ static void afec0_data_ready(void)
 {
 	g_afec0_sample_data = afec_get_latest_value(AFEC0);
 	//puts("BPM channel Voltage:");
-	print_sample(g_afec0_sample_data);
+	//print_sample(g_afec0_sample_data);
+	buffer[bufferIndex]= g_afec0_sample_data;
+	bufferIndex++;
 }
 
 /**
@@ -102,8 +107,8 @@ static void afec0_data_ready(void)
 static void afec1_data_ready(void)
 {
 	g_afec1_sample_data = afec_get_latest_value(AFEC1);
-	puts("Fiducial channel Voltage:");
-	print_sample(g_afec1_sample_data);
+	//puts("Fiducial channel Voltage:");
+	//print_sample(g_afec1_sample_data);
 }
 /**
  * \brief Simple function to print sample data.
@@ -118,7 +123,7 @@ static void configure_tc_trigger(void)
     uint32_t ul_div = 0;
 	uint32_t ul_tc_clks = 0;
 	uint32_t ul_sysclk = sysclk_get_cpu_hz();
-	int sampleFreq= 100000;
+	int sampleFreq= 250000;
 	// Enable peripheral clock. 
 	pmc_enable_periph_clk(ID_TC0);
 
@@ -183,24 +188,31 @@ int main (void)
 	g_afec0_sample_data = 0;
 	g_afec1_sample_data = 0;
 	g_max_digital = MAX_DIGITAL_12_BIT;
-
+	bool test;
 	set_afec_test();
-
-	while (1) {
-		//afec_start_software_conversion(AFEC1);
-		//delay_ms(g_delay_cnt);
-
-		/* Check if the user enters a key. */
-		//if (!uart_read(CONF_UART, &uc_key)) {
-		/* Disable all afec interrupt. */
-		//afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
-		//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
-		//tc_stop(TC0, 0);
-		//set_afec_test();
-		//}
-	}
-
-
+	printf("waiting");
+		while (bufferIndex<buffersize) {
+			printf(".");
+			//afec_start_software_conversion(AFEC1);
+			//delay_ms(g_delay_cnt);
+			/* Check if the user enters a key. */
+			//if (!uart_read(CONF_UART, &uc_key)) {
+			/* Disable all afec interrupt. */
+			//afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
+			//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
+			//tc_stop(TC0, 0);
+			//set_afec_test();
+			//}
+		}
+		afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
+		afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
+		tc_stop(TC0, 0);
+		uint16_t i=0;
+		while (i<buffersize)
+		{
+			print_sample(buffer[i]);
+			i++;
+		}
 	//ioport_get_pin_level(BUTTON_0_PIN) == BUTTON_0_ACTIVE) {
 
 }
