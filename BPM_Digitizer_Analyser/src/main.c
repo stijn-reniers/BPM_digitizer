@@ -22,6 +22,9 @@
 #include "asf.h"
 #include "delay.h"
 #include "conf_uart_serial.h"
+#include "conf_board.h"
+#include "conf_clock.h"
+#include "stdio_serial.h"
 
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
@@ -29,6 +32,8 @@
 /** The maximal digital value (unsigned long)*/
 #define MAX_DIGITAL_12_BIT     (4095UL)
 
+/** The maximal digital value */
+#define MAX_DIGITAL (4095)
 /** Title to appear on Putty terminal*/
 #define STRING_HEADER "-- Vertical prototype 1 : AFEC interface and UART link --\r\n" \
 
@@ -36,6 +41,13 @@
 #define fiducialInput IOPORT_CREATE_PIN(PORTA, 6)
 #define buffersize 16667
 
+/** The DAC Channel value */
+#define DACC_CHANNEL_0 0
+
+/** Analog control value */
+#define DACC_ANALOG_CONTROL (DACC_ACR_IBCTLCH0(0x02) \
+							| DACC_ACR_IBCTLCH1(0x02) \
+							| DACC_ACR_IBCTLDACCORE(0x01))
 /** ------------------------------------------------------------------------------------ */
 /** Global variable definitions   														 */
 /** ------------------------------------------------------------------------------------ */
@@ -54,11 +66,34 @@ static uint32_t g_max_digital;
 /** The delay counter value */
 static uint32_t g_delay_cnt;
 
-
+bool triggered= false;
 /** ------------------------------------------------------------------------------------ */
 /** Function definitions																 */
 /** ------------------------------------------------------------------------------------ */
 
+/**
+ * Interrupt handler for the ACC.
+ */
+void ACC_Handler(void)
+{
+	uint32_t ul_status;
+
+	ul_status = acc_get_interrupt_status(ACC);
+
+	/* Compare Output Interrupt */
+	if ((ul_status & ACC_ISR_CE) == ACC_ISR_CE) {
+
+		if (acc_get_comparison_result(ACC)) {
+			puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
+			if(!triggered)
+				triggered= true;
+		} else {
+			puts("-ISR- Voltage Comparison Result: AD5 < DAC0\r");
+			if(triggered)
+				triggered=false;
+		}
+	}
+}
 
 /* Configure UART console */
 
@@ -125,13 +160,7 @@ static void afec0_data_ready(void)
 	bufferIndex++;														// adjust buffer index
 }
 
-/* brief AFEC1 DRDY interrupt callback function. */
 
-static void afec1_data_ready(void)
-{
-	g_afec1_sample_data = afec_get_latest_value(AFEC1);					// Obtain latest sample from FIDUCIAL signal (EXT3 - pin3 (ch0))
-	
-}
 
 
 /* Configure to trigger interrupt-driven AFEC by TIOA output of timer at the desired sample rate.*/
@@ -168,7 +197,7 @@ static void set_afec_test(void)
 	afec_ch_get_config_defaults(&afec_ch_cfg);
 
 		g_delay_cnt = 1000;
-		afec_enable(AFEC1);
+		//afec_enable(AFEC1);
 		afec_init(AFEC0, &afec_cfg);
 		afec_init(AFEC1, &afec_cfg);
 		afec_ch_set_config(AFEC0, AFEC_CHANNEL_6, &afec_ch_cfg);
@@ -180,13 +209,48 @@ static void set_afec_test(void)
 		afec_channel_enable(AFEC1, AFEC_CHANNEL_0);
 		afec_channel_enable(AFEC0, AFEC_CHANNEL_6);
 		afec_set_callback(AFEC0, AFEC_INTERRUPT_DATA_READY, afec0_data_ready, 1);
-		afec_set_callback(AFEC1, AFEC_INTERRUPT_DATA_READY, afec1_data_ready, 1);
+		//afec_set_callback(AFEC1, AFEC_INTERRUPT_DATA_READY, afec1_data_ready, 1);
 		afec_start_calibration(AFEC0);
 		while((afec_get_interrupt_status(AFEC0) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
-		afec_start_calibration(AFEC1);
-		while((afec_get_interrupt_status(AFEC1) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
+		//afec_start_calibration(AFEC1);
+		//while((afec_get_interrupt_status(AFEC1) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
 	
 }
+
+static void configureDACC(void){
+	/* Enable clock for DACC */
+	pmc_enable_periph_clk(ID_DACC);
+	/* Reset DACC registers */
+	dacc_reset(DACC);
+	/* External trigger mode disabled. DACC in free running mode. */
+	dacc_disable_trigger(DACC);
+	/* Half word transfer mode */
+	dacc_set_transfer_mode(DACC, 0);
+	/* Timing:
+	 * max speed mode -    0 (disabled)
+	 * startup time   - 0xf (960 dacc clocks)
+	 */
+	dacc_set_timing(DACC, 0, 0xf);
+	/* Disable TAG and select output channel DACC_CHANNEL */
+	dacc_set_channel_selection(DACC, DACC_CHANNEL_0);
+	/* Enable output channel DACC_CHANNEL */
+	dacc_enable_channel(DACC, DACC_CHANNEL_0);
+	/* Setup analog current */
+	dacc_set_analog_control(DACC, DACC_ANALOG_CONTROL);
+
+	/* Set DAC0 output at ADVREF/2. The DAC formula is:
+	 *
+	 * (5/6 * VOLT_REF) - (1/6 * VOLT_REF)     volt - (1/6 * VOLT_REF)
+	 * ----------------------------------- = --------------------------
+	 *              MAX_DIGITAL                       digit
+	 *
+	 * Here, digit = MAX_DIGITAL/2
+	 */
+	dacc_write_conversion_data(DACC, MAX_DIGITAL / 2);
+	
+
+}
+
 int main (void)
 {
 	/* Initialize the SAM system. */
@@ -197,37 +261,48 @@ int main (void)
 
 	/* Output example information. */
 	//puts(STRING_HEADER);
-
+	configureDACC();
 	g_afec0_sample_data = 0;
 	g_afec1_sample_data = 0;
 	g_max_digital = MAX_DIGITAL_12_BIT;
 	bool test;
 	set_afec_test();
-			while (bufferIndex<buffersize) {
-			printf(".");
-			//afec_start_software_conversion(AFEC1);
-			//delay_ms(g_delay_cnt);
-			/* Check if the user enters a key. */
-			//if (!uart_read(CONF_UART, &uc_key)) {
-			/* Disable all afec interrupt. */
-			//afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
-			//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
-			//tc_stop(TC0, 0);
-			//set_afec_test();
-			//}
-		}
+	/* Enable clock for ACC */
+	pmc_enable_periph_clk(ID_ACC);
+	/* Initialize ACC */
+	acc_init(ACC, ACC_MR_SELPLUS_AD7, ACC_MR_SELMINUS_DAC1,
+	ACC_MR_EDGETYP_ANY, ACC_MR_INV_DIS);
+
+	/* Enable ACC interrupt */
+	NVIC_EnableIRQ(ACC_IRQn);
+
+	/* Enable */
+	acc_enable_interrupt(ACC);
+	while (bufferIndex<buffersize) {
+		printf(".");
+		//afec_start_software_conversion(AFEC1);
+		//delay_ms(g_delay_cnt);
+		/* Check if the user enters a key. */
+		//if (!uart_read(CONF_UART, &uc_key)) {
+		/* Disable all afec interrupt. */
+		//afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
+		//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
+		//tc_stop(TC0, 0);
+		//set_afec_test();
+		//}
+	}
 		
-		afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
-		afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
-		tc_stop(TC0, 0);
+	afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
+	//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
+	tc_stop(TC0, 0);
 		
-		uint16_t i=0;
-		while (i< buffersize)
-		{
-			print_sample(buffer[i]);
+	uint16_t i=0;
+	while (i< buffersize)
+	{
+		print_sample(buffer[i]);
 			
-			i++;
-		}
+		i++;
+	}
 		
 		
 }

@@ -1,6 +1,6 @@
-src/ASF/sam/drivers/usart/usart.d src/ASF/sam/drivers/usart/usart.o: \
- ../src/ASF/sam/drivers/usart/usart.c \
- ../src/ASF/sam/drivers/usart/usart.h ../src/ASF/sam/utils/compiler.h \
+src/ASF/sam/drivers/acc/acc.d src/ASF/sam/drivers/acc/acc.o: \
+ ../src/ASF/sam/drivers/acc/acc.c ../src/ASF/sam/drivers/acc/acc.h \
+ ../src/ASF/sam/utils/compiler.h \
  d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\lib\gcc\arm-none-eabi\6.3.1\include\stddef.h \
  ../src/ASF/common/utils/parts.h \
  ../src/ASF/sam/utils/preprocessor/preprocessor.h \
@@ -125,7 +125,7 @@ src/ASF/sam/drivers/usart/usart.d src/ASF/sam/drivers/usart/usart.o: \
  ../src/ASF/common/utils/interrupt.h \
  ../src/ASF/common/utils/interrupt/interrupt_sam_nvic.h
 
-../src/ASF/sam/drivers/usart/usart.h:
+../src/ASF/sam/drivers/acc/acc.h:
 
 ../src/ASF/sam/utils/compiler.h:
 

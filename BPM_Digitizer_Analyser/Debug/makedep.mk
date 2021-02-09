@@ -18,7 +18,11 @@ src\ASF\common\utils\stdio\write.c
 
 src\ASF\sam\boards\sam4e_xplained_pro\init.c
 
+src\ASF\sam\drivers\acc\acc.c
+
 src\ASF\sam\drivers\afec\afec.c
+
+src\ASF\sam\drivers\dacc\dacc.c
 
 src\ASF\sam\drivers\pmc\pmc.c
 
