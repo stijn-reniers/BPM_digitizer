@@ -22,6 +22,7 @@
 #include "asf.h"
 #include "delay.h"
 #include "conf_uart_serial.h"
+#include "Cycledatabuffer.h"
 
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
@@ -44,9 +45,6 @@
 	Collector (0) and Fiducial(1) BPM-80 signal  */
 float g_afec0_sample_data, g_afec1_sample_data;
 
-/** Data buffer creation (as a simple array for now) */
-uint16_t buffer[buffersize];
-uint16_t bufferIndex=0;
 
 /** The maximal digital value */
 static uint32_t g_max_digital;
@@ -55,10 +53,11 @@ static uint32_t g_max_digital;
 static uint32_t g_delay_cnt;
 
 
-/** ------------------------------------------------------------------------------------ */
-/** Function definitions																 */
-/** ------------------------------------------------------------------------------------ */
 
+
+/*************************************************************************************************
+******************************** UART INTERFACING CODE *******************************************
+**************************************************************************************************/
 
 /* Configure UART console */
 
@@ -102,18 +101,18 @@ static void print_float(float voltage)
 
 static void print_sample(uint16_t sample)
 {
-	/*uint32_t zero = 0;
-	if(usart_is_tx_ready(CONF_UART)){
-		usart_serial_putchar(CONF_UART,sample);
-	}
-	//usart_write(CONF_UART,zero);
-	
-	*/
+		
+	uint16_t sample_swapped_bytes = ((sample<<8)&0xff00)|((sample>>8)&0x00ff);
+	usart_serial_write_packet(CONF_UART, &sample_swapped_bytes ,2);
+
 	//float voltage  = ((float)sample/4096)*3.3;
-	printf("%u\n\r", sample);
-	
-	
+	//printf("%u\n\r", sample);
 }
+
+
+/*************************************************************************************************
+******************************** INTERRUPT-DRIVEN AFEC *******************************************
+**************************************************************************************************/
 
 
 /* brief AFEC0 DRDY interrupt callback function. */
@@ -187,6 +186,10 @@ static void set_afec_test(void)
 		while((afec_get_interrupt_status(AFEC1) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
 	
 }
+
+
+
+
 int main (void)
 {
 	/* Initialize the SAM system. */
@@ -195,39 +198,28 @@ int main (void)
 
 	configure_console();
 
-	/* Output example information. */
-	//puts(STRING_HEADER);
 
 	g_afec0_sample_data = 0;
 	g_afec1_sample_data = 0;
 	g_max_digital = MAX_DIGITAL_12_BIT;
 	bool test;
 	set_afec_test();
-			while (bufferIndex<buffersize) {
+			
+	while (bufferIndex < buffersize) 
+		{			
 			printf(".");
-			//afec_start_software_conversion(AFEC1);
-			//delay_ms(g_delay_cnt);
-			/* Check if the user enters a key. */
-			//if (!uart_read(CONF_UART, &uc_key)) {
-			/* Disable all afec interrupt. */
-			//afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
-			//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
-			//tc_stop(TC0, 0);
-			//set_afec_test();
-			//}
 		}
 		
-		afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
-		afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
-		tc_stop(TC0, 0);
-		
-		uint16_t i=0;
-		while (i< buffersize)
+					
+	afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
+	afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
+	tc_stop(TC0, 0);
+	
+	uint16_t i=0;	
+	while (i< buffersize)
 		{
 			print_sample(buffer[i]);
-			
 			i++;
 		}
-		
 		
 }
