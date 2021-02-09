@@ -1,74 +1,67 @@
-/**
- * \file
- *
- * \brief Empty user application template
- *
- */
+/* 
+   Authors : Decoster Bram, Reniers Stijn
+   Master's thesis project Group T, IMEC
 
-/**
- * \mainpage User Application template doxygen documentation
- *
- * \par Empty user application template
- *
- * This is a bare minimum user application template.
- *
- * For documentation of the board, go \ref group_common_boards "here" for a link
- * to the board-specific documentation.
- *
- * \par Content
- *
- * -# Include the ASF header files (through asf.h)
- * -# Minimal main function that starts with a call to board_init()
- * -# Basic usage of on-board LED and button
- * -# "Insert application code here" comment
- *
- */
+   BPM-80 Digitization module vertical prototype 1
+   ------------------------------------------------
+   Features :
+	-	AFEC ADC interface
+	-	Data buffer interface
+	-	Initial (rough ) implementation of the four algorithms
+	-	U(S)ART serial data link
+	-	Putty/MATLAB host application for data representation
+	
+   -------------------------------------------------
 
-/*
- * Include header files for all drivers that have been imported from
- * Atmel Software Framework (ASF).
- */
-/*
- * Support and FAQ: visit <a href="https://www.microchip.com/support/">Microchip Support</a>
- */
+*/
+
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "asf.h"
 #include "delay.h"
 #include "conf_uart_serial.h"
-/** Reference voltage for AFEC in mv. */
-#define VOLT_REF        (3300)
 
-/** The maximal digital value */
+/** Reference voltage for AFEC in mv. */
+#define VOLT_REF			   (3300)
+
+/** The maximal digital value (unsigned long)*/
 #define MAX_DIGITAL_12_BIT     (4095UL)
 
-#define STRING_HEADER "-- AFEC Feature Test Example --\r\n" \
-"-- "BOARD_NAME" --\r\n" \
-"-- Compiled: "__DATE__" "__TIME__" --""\r"
+/** Title to appear on Putty terminal*/
+#define STRING_HEADER "-- Vertical prototype 1 : AFEC interface and UART link --\r\n" \
+
+
 #define fiducialInput IOPORT_CREATE_PIN(PORTA, 6)
 #define buffersize 16667
+
 /** ------------------------------------------------------------------------------------ */
-/** global variables       																*/
+/** Global variable definitions   														 */
 /** ------------------------------------------------------------------------------------ */
-/** AFEC sample data */
+
+/** Variables containing the AFEC samples for the 
+	Collector (0) and Fiducial(1) BPM-80 signal  */
 float g_afec0_sample_data, g_afec1_sample_data;
-/** buffer */
+
+/** Data buffer creation (as a simple array for now) */
 uint16_t buffer[buffersize];
 uint16_t bufferIndex=0;
+
 /** The maximal digital value */
 static uint32_t g_max_digital;
 
 /** The delay counter value */
 static uint32_t g_delay_cnt;
+
+
 /** ------------------------------------------------------------------------------------ */
-/** function defenitions																*/
+/** Function definitions																 */
 /** ------------------------------------------------------------------------------------ */
 
 
-/**
- * \brief Configure UART console.
- */
+/* Configure UART console */
+
 static void configure_console(void)
 {
 	const usart_serial_options_t uart_serial_options = {
@@ -76,56 +69,82 @@ static void configure_console(void)
 		.paritytype = CONF_UART_PARITY
 	};
 
-	/* Configure console UART. */
-	sysclk_enable_peripheral_clock(CONSOLE_UART_ID);
-	stdio_serial_init(CONF_UART, &uart_serial_options);
+	sysclk_enable_peripheral_clock(CONSOLE_UART_ID);					// Enable the peripheral clock of the UART0 peripheral
+	stdio_serial_init(CONF_UART, &uart_serial_options);					// Setting UART as the stdio device, passing the options by reference
 }
+
+
+/* Allows to convert integer sample value to float */
+
+static void print_float(float voltage)
+{
+	uint8_t i;
+	int32_t j;
+	float f;
+
+	f = 100.00 * voltage;
+
+	j = (int32_t)f;
+
+	if (voltage > 0) {
+		i = j - (int32_t)voltage * 100;
+		} else {
+		i = (int32_t)voltage * 100 - j;
+	}
+
+	j = j / 100;
+
+	printf("%d.%d mv \n\r", (int32_t)j, (int32_t)i);
+}
+
+
+/* Send sample value over UART stdio */
+
 static void print_sample(uint16_t sample)
 {
 	/*uint32_t zero = 0;
 	if(usart_is_tx_ready(CONF_UART)){
-		usart_putchar(CONF_UART,sample);
-	}*/
+		usart_serial_putchar(CONF_UART,sample);
+	}
 	//usart_write(CONF_UART,zero);
-	printf("%d\n\r", sample);
+	
+	*/
+	//float voltage  = ((float)sample/4096)*3.3;
+	printf("%u\n\r", sample);
+	
+	
 }
-/**
- * \brief AFEC0 DRDY interrupt callback function.
- */
+
+
+/* brief AFEC0 DRDY interrupt callback function. */
+
 static void afec0_data_ready(void)
 {
-	g_afec0_sample_data = afec_get_latest_value(AFEC0);
-	//puts("BPM channel Voltage:");
-	//print_sample(g_afec0_sample_data);
-	buffer[bufferIndex]= g_afec0_sample_data;
-	bufferIndex++;
+	g_afec0_sample_data = afec_get_latest_value(AFEC0);					// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
+	buffer[bufferIndex]= g_afec0_sample_data;							// Transfer the sample to the buffer @ sample_index within the scanning wire cycle
+	bufferIndex++;														// adjust buffer index
 }
 
-/**
- * \brief AFEC1 DRDY interrupt callback function.
- */
+/* brief AFEC1 DRDY interrupt callback function. */
+
 static void afec1_data_ready(void)
 {
-	g_afec1_sample_data = afec_get_latest_value(AFEC1);
-	//puts("Fiducial channel Voltage:");
-	//print_sample(g_afec1_sample_data);
+	g_afec1_sample_data = afec_get_latest_value(AFEC1);					// Obtain latest sample from FIDUCIAL signal (EXT3 - pin3 (ch0))
+	
 }
-/**
- * \brief Simple function to print sample data.
- */
 
 
-/**
- * \brief Configure to trigger AFEC by TIOA output of timer.
- */
+/* Configure to trigger interrupt-driven AFEC by TIOA output of timer at the desired sample rate.*/
+
 static void configure_tc_trigger(void)
 {
     uint32_t ul_div = 0;
 	uint32_t ul_tc_clks = 0;
-	uint32_t ul_sysclk = sysclk_get_cpu_hz();
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();											// returns (possibly prescaled) clock frequency
+	
 	int sampleFreq= 250000;
-	// Enable peripheral clock. 
-	pmc_enable_periph_clk(ID_TC0);
+	
+	pmc_enable_periph_clk(ID_TC0);														// Enable peripheral clock of timer counter 0
 
 	tc_find_mck_divisor(sampleFreq, ul_sysclk, &ul_div, &ul_tc_clks, ul_sysclk);
 	tc_init(TC0, 0, ul_tc_clks | TC_CMR_CPCTRG | TC_CMR_WAVE |
@@ -134,21 +153,15 @@ static void configure_tc_trigger(void)
 	TC0->TC_CHANNEL[0].TC_RA = (ul_sysclk / ul_div) / (sampleFreq*2);
 	TC0->TC_CHANNEL[0].TC_RC = (ul_sysclk / ul_div) / sampleFreq;
 
-	// Start the Timer. 
-	tc_start(TC0, 0); 
-	
-
-	
-	
-    afec_set_trigger(AFEC0, AFEC_TRIG_TIO_CH_0);
+	 
+	tc_start(TC0, 0);																	// Start the TC0 timer
+    afec_set_trigger(AFEC0, AFEC_TRIG_TIO_CH_0);										// Set TC0 as the trigger for AFEC module
 }
 
 static void set_afec_test(void)
 {
 	struct afec_config afec_cfg;
 	struct afec_ch_config afec_ch_cfg;
-
-	
 
 	afec_enable(AFEC0);
 	afec_get_config_defaults(&afec_cfg);
@@ -183,15 +196,14 @@ int main (void)
 	configure_console();
 
 	/* Output example information. */
-	puts(STRING_HEADER);
+	//puts(STRING_HEADER);
 
 	g_afec0_sample_data = 0;
 	g_afec1_sample_data = 0;
 	g_max_digital = MAX_DIGITAL_12_BIT;
 	bool test;
 	set_afec_test();
-	printf("waiting");
-		while (bufferIndex<buffersize) {
+			while (bufferIndex<buffersize) {
 			printf(".");
 			//afec_start_software_conversion(AFEC1);
 			//delay_ms(g_delay_cnt);
@@ -204,15 +216,18 @@ int main (void)
 			//set_afec_test();
 			//}
 		}
+		
 		afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
 		afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
 		tc_stop(TC0, 0);
+		
 		uint16_t i=0;
-		while (i<buffersize)
+		while (i< buffersize)
 		{
 			print_sample(buffer[i]);
+			
 			i++;
 		}
-	//ioport_get_pin_level(BUTTON_0_PIN) == BUTTON_0_ACTIVE) {
-
+		
+		
 }
