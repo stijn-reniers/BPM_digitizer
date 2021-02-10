@@ -73,29 +73,6 @@ static void configure_console(void)
 }
 
 
-/* Allows to convert integer sample value to float */
-
-static void print_float(float voltage)
-{
-	uint8_t i;
-	int32_t j;
-	float f;
-
-	f = 100.00 * voltage;
-
-	j = (int32_t)f;
-
-	if (voltage > 0) {
-		i = j - (int32_t)voltage * 100;
-		} else {
-		i = (int32_t)voltage * 100 - j;
-	}
-
-	j = j / 100;
-
-	printf("%d.%d mv \n\r", (int32_t)j, (int32_t)i);
-}
-
 
 /* Send sample value over UART stdio */
 
@@ -197,29 +174,36 @@ int main (void)
 	board_init();
 
 	configure_console();
-
-
+	
 	g_afec0_sample_data = 0;
 	g_afec1_sample_data = 0;
 	g_max_digital = MAX_DIGITAL_12_BIT;
 	bool test;
 	set_afec_test();
 			
+	/* Print out some dots until buffer is filled*/
+	
 	while (bufferIndex < buffersize) 
-		{			
-			printf(".");
-		}
+	{			
+		printf(".");
+	}
 		
 					
 	afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
 	afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
 	tc_stop(TC0, 0);
 	
+	
+	// Print for testing algorithms
+	
 	uint16_t i=0;	
 	while (i< buffersize)
-		{
-			print_sample(buffer[i]);
-			i++;
-		}
+	{
+		print_sample(buffer[i]);
+		i++;
+	} 
+	
+	
+	show_beam_parameters();
 		
 }
