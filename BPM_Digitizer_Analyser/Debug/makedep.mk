@@ -44,5 +44,7 @@ src\ASF\sam\utils\syscalls\gcc\syscalls.c
 
 src\ASF\thirdparty\wireless\addons\sio2host\uart\sio2host.c
 
+src\buffer.c
+
 src\main.c
 

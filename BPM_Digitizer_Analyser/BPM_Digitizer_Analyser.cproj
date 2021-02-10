@@ -1080,6 +1080,12 @@
     <None Include="src\config\conf_sio2host.h">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="src\buffer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\buffer.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\Cycledatabuffer.h">
       <SubType>compile</SubType>
     </Compile>

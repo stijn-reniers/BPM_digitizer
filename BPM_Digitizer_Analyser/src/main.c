@@ -25,7 +25,7 @@
 #include "conf_board.h"
 #include "conf_clock.h"
 #include "stdio_serial.h"
-
+#include "buffer.h"
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
 
@@ -39,7 +39,6 @@
 
 
 #define fiducialInput IOPORT_CREATE_PIN(PORTA, 6)
-#define buffersize 16667
 
 /** The DAC Channel value */
 #define DACC_CHANNEL_0 0
@@ -54,11 +53,9 @@
 
 /** Variables containing the AFEC samples for the 
 	Collector (0) and Fiducial(1) BPM-80 signal  */
-float g_afec0_sample_data, g_afec1_sample_data;
+uint16_t g_afec0_sample_data;
 
-/** Data buffer creation (as a simple array for now) */
-uint16_t buffer[buffersize];
-uint16_t bufferIndex=0;
+
 
 /** The maximal digital value */
 static uint32_t g_max_digital;
@@ -85,8 +82,14 @@ void ACC_Handler(void)
 
 		if (acc_get_comparison_result(ACC)) {
 			puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
-			if(!triggered)
+			
+			if(!triggered){
+				cycleEnded();
 				triggered= true;
+				tc_start(TC0,0);
+			}
+				
+				
 		} else {
 			puts("-ISR- Voltage Comparison Result: AD5 < DAC0\r");
 			if(triggered)
@@ -95,6 +98,13 @@ void ACC_Handler(void)
 	}
 }
 
+/* brief AFEC0 DRDY interrupt callback function. */
+
+static void afec0_data_ready(void)
+{
+	g_afec0_sample_data = afec_get_latest_value(AFEC0);					// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
+	addSample(g_afec0_sample_data);
+}
 /* Configure UART console */
 
 static void configure_console(void)
@@ -135,33 +145,20 @@ static void print_float(float voltage)
 
 /* Send sample value over UART stdio */
 
-static void print_sample(uint16_t sample)
+/*static void print_sample(uint16_t sample)
 {
-	/*uint32_t zero = 0;
+	uint32_t zero = 0;
 	if(usart_is_tx_ready(CONF_UART)){
 		usart_serial_putchar(CONF_UART,sample);
 	}
 	//usart_write(CONF_UART,zero);
 	
-	*/
+	
 	//float voltage  = ((float)sample/4096)*3.3;
 	printf("%u\n\r", sample);
 	
 	
-}
-
-
-/* brief AFEC0 DRDY interrupt callback function. */
-
-static void afec0_data_ready(void)
-{
-	g_afec0_sample_data = afec_get_latest_value(AFEC0);					// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
-	buffer[bufferIndex]= g_afec0_sample_data;							// Transfer the sample to the buffer @ sample_index within the scanning wire cycle
-	bufferIndex++;														// adjust buffer index
-}
-
-
-
+}*/
 
 /* Configure to trigger interrupt-driven AFEC by TIOA output of timer at the desired sample rate.*/
 
@@ -183,7 +180,7 @@ static void configure_tc_trigger(void)
 	TC0->TC_CHANNEL[0].TC_RC = (ul_sysclk / ul_div) / sampleFreq;
 
 	 
-	tc_start(TC0, 0);																	// Start the TC0 timer
+	//tc_start(TC0, 0);																	// Start the TC0 timer
     afec_set_trigger(AFEC0, AFEC_TRIG_TIO_CH_0);										// Set TC0 as the trigger for AFEC module
 }
 
@@ -214,7 +211,6 @@ static void set_afec_test(void)
 		while((afec_get_interrupt_status(AFEC0) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
 		//afec_start_calibration(AFEC1);
 		//while((afec_get_interrupt_status(AFEC1) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
-	
 }
 
 static void configureDACC(void){
@@ -263,7 +259,6 @@ int main (void)
 	//puts(STRING_HEADER);
 	configureDACC();
 	g_afec0_sample_data = 0;
-	g_afec1_sample_data = 0;
 	g_max_digital = MAX_DIGITAL_12_BIT;
 	bool test;
 	set_afec_test();
@@ -278,8 +273,8 @@ int main (void)
 
 	/* Enable */
 	acc_enable_interrupt(ACC);
-	while (bufferIndex<buffersize) {
-		printf(".");
+	while (1) {
+		printFullBuffer();
 		//afec_start_software_conversion(AFEC1);
 		//delay_ms(g_delay_cnt);
 		/* Check if the user enters a key. */
@@ -295,14 +290,5 @@ int main (void)
 	afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
 	//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
 	tc_stop(TC0, 0);
-		
-	uint16_t i=0;
-	while (i< buffersize)
-	{
-		print_sample(buffer[i]);
-			
-		i++;
-	}
-		
 		
 }
