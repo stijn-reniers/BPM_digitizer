@@ -26,6 +26,7 @@
 #include "conf_clock.h"
 #include "stdio_serial.h"
 #include "buffer.h"
+#include "Cycledatabuffer.h"
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
 
@@ -64,6 +65,7 @@ static uint32_t g_max_digital;
 static uint32_t g_delay_cnt;
 
 bool triggered= false;
+bool fullBuffer=false;
 /** ------------------------------------------------------------------------------------ */
 /** Function definitions																 */
 /** ------------------------------------------------------------------------------------ */
@@ -81,17 +83,18 @@ void ACC_Handler(void)
 	if ((ul_status & ACC_ISR_CE) == ACC_ISR_CE) {
 
 		if (acc_get_comparison_result(ACC)) {
-			puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
+			//puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
 			
 			if(!triggered){
 				cycleEnded();
+				fullBuffer=true;
 				triggered= true;
 				tc_start(TC0,0);
 			}
 				
 				
 		} else {
-			puts("-ISR- Voltage Comparison Result: AD5 < DAC0\r");
+			//puts("-ISR- Voltage Comparison Result: AD5 < DAC0\r");
 			if(triggered)
 				triggered=false;
 		}
@@ -117,31 +120,6 @@ static void configure_console(void)
 	sysclk_enable_peripheral_clock(CONSOLE_UART_ID);					// Enable the peripheral clock of the UART0 peripheral
 	stdio_serial_init(CONF_UART, &uart_serial_options);					// Setting UART as the stdio device, passing the options by reference
 }
-
-
-/* Allows to convert integer sample value to float */
-
-static void print_float(float voltage)
-{
-	uint8_t i;
-	int32_t j;
-	float f;
-
-	f = 100.00 * voltage;
-
-	j = (int32_t)f;
-
-	if (voltage > 0) {
-		i = j - (int32_t)voltage * 100;
-		} else {
-		i = (int32_t)voltage * 100 - j;
-	}
-
-	j = j / 100;
-
-	printf("%d.%d mv \n\r", (int32_t)j, (int32_t)i);
-}
-
 
 /* Send sample value over UART stdio */
 
@@ -178,8 +156,8 @@ static void configure_tc_trigger(void)
 
 	TC0->TC_CHANNEL[0].TC_RA = (ul_sysclk / ul_div) / (sampleFreq*2);
 	TC0->TC_CHANNEL[0].TC_RC = (ul_sysclk / ul_div) / sampleFreq;
+	
 
-	 
 	//tc_start(TC0, 0);																	// Start the TC0 timer
     afec_set_trigger(AFEC0, AFEC_TRIG_TIO_CH_0);										// Set TC0 as the trigger for AFEC module
 }
@@ -242,7 +220,7 @@ static void configureDACC(void){
 	 *
 	 * Here, digit = MAX_DIGITAL/2
 	 */
-	dacc_write_conversion_data(DACC, MAX_DIGITAL / 2);
+	dacc_write_conversion_data(DACC, 3100);
 	
 
 }
@@ -273,22 +251,27 @@ int main (void)
 
 	/* Enable */
 	acc_enable_interrupt(ACC);
+	bool loop=true;
 	while (1) {
-		printFullBuffer();
-		//afec_start_software_conversion(AFEC1);
-		//delay_ms(g_delay_cnt);
-		/* Check if the user enters a key. */
-		//if (!uart_read(CONF_UART, &uc_key)) {
-		/* Disable all afec interrupt. */
-		//afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
-		//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
-		//tc_stop(TC0, 0);
-		//set_afec_test();
-		//}
-	}
+		if(getbuffersFilled()==100){
+			afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
+			tc_stop(TC0, 0);
+			NVIC_DisableIRQ(ACC_IRQn);
+		}
+		if(fullBuffer){
+			fullBuffer=false;
+			show_beam_parameters(getFilledBuffer());
+		}
+		//printFullBuffer();
 		
+	}
+	
 	afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
 	//afec_disable_interrupt(AFEC1, AFEC_INTERRUPT_ALL);
 	tc_stop(TC0, 0);
+	NVIC_DisableIRQ(ACC_IRQn);
+	
+
+	
 		
 }

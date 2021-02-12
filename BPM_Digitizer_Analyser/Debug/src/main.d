@@ -153,7 +153,8 @@ src/main.d src/main.o: ../src/main.c \
  ../src/ASF/common/services/serial/sam_uart/uart_serial.h \
  ../src/ASF/sam/drivers/uart/uart.h ../src/ASF/sam/drivers/usart/usart.h \
  ../src/config/conf_uart_serial.h ../src/ASF/sam/drivers/tc/tc.h \
- ../src/config/conf_board.h ../src/buffer.h
+ ../src/config/conf_board.h ../src/buffer.h ../src/Cycledatabuffer.h \
+ d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\math.h
 
 d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\stdio.h:
 
@@ -482,3 +483,7 @@ d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\alloca.h:
 ../src/config/conf_board.h:
 
 ../src/buffer.h:
+
+../src/Cycledatabuffer.h:
+
+d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\math.h:
