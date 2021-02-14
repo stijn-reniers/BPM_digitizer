@@ -254,15 +254,14 @@ int main (void)
 	bool loop=true;
 	while (1) {
 		if(getbuffersFilled()==100){
-			afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);
-			tc_stop(TC0, 0);
-			NVIC_DisableIRQ(ACC_IRQn);
+			break;
 		}
 		if(fullBuffer){
 			fullBuffer=false;
 			show_beam_parameters(getFilledBuffer());
 		}
-		//printFullBuffer();
+		
+		
 		
 	}
 	

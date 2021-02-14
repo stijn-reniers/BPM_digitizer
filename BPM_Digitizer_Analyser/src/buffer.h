@@ -14,7 +14,7 @@
 #include <string.h>
 #define buffersize 8334
 
-void printFullBuffer(void);
+void sendBuffer(void);
 void addSample(uint16_t sample);
 volatile void switchBuffer(void);
 void cycleEnded(void);

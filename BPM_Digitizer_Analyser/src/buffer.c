@@ -16,12 +16,14 @@ bool currentbuffer=false;
 bool printed=false;
 
 
-void printFullBuffer(void){
+void sendBuffer(void){
 	if (!printed)
 	{
 		printed=true;
-		for(int i=0; i<buffersize;i++){
-			printf("%u\n\r", buffer0[i]);
+		for(int i=0; i<buffersize;i){
+			uint16_t sample = buffer0[i];
+			uint16_t sample_swapped_bytes = ((sample<<8)&0xff00)|((sample>>8)&0x00ff);
+			usart_serial_write_packet(CONF_UART, &sample_swapped_bytes ,2);
 		}
 	}	
 }
