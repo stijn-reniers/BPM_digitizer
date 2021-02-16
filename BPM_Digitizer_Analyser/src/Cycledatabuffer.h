@@ -21,7 +21,8 @@ uint16_t half_cycle_length = (buffersize-1)>>1;
 
 uint16_t peaks_localization[6] = {0,0,0,0,0,0};
 uint16_t beam_intensity[2] = {0,0};
-float skewness[2] = {0,0};	
+uint16_t skewness[2] = {0,0};	
+uint16_t fwhm[2] = {0,0};
 uint8_t count=1;
 uint16_t fwhm[2]={0,0};	
 	
@@ -167,8 +168,10 @@ void detect_peaks(uint16_t threshold, uint16_t* buffer)
 /* Takes as input the borders of both peaks*/
 /* Outputs beam intensity of X and Y crossection, so that higher level data representation can choose whether to multiply or sum them*/
 
-void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right,uint16_t* buffer)
+void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right, uint16_t* buffer)
 {
+	beam_intensity[0] = 0;
+	beam_intensity[1] = 0;
 	
 	for (uint16_t i = peak1_left; i < peak1_right ; i++)
 	{
@@ -204,6 +207,7 @@ void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left
 		fwhm[1]+= sqr((buffer[i]-mean[1]));
 	}
 	fwhm[1]=fwhm[1]/(peak2_right-peak2_left);
+
 }
 
 
@@ -211,34 +215,35 @@ void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left
 
 void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right,uint16_t* buffer)
 {
-	uint16_t mean[2] = {0,0};
-		
-	mean[0] = sample_average(peak1_left, peak1_right,buffer);
-	mean[1] = sample_average(peak2_left, peak2_right,buffer);
-	
-	uint16_t first_peak_mean  = mean[0];
-	uint16_t second_peak_mean = mean[1];
+	uint16_t first_peak_mean  =  sample_average(peak1_left, peak1_right,buffer);
+	uint16_t second_peak_mean =  sample_average(peak2_left, peak2_right,buffer);
 	
 	uint32_t numerator = 0;
-	uint16_t denominator = 0;
+	uint32_t denominator = 0;
+	uint16_t nr_of_samples = peak1_right-peak1_left;
 	
 	for (uint16_t i = peak1_left; i < peak1_right; i++)
 	{
-		numerator += pow((buffer[i]-first_peak_mean),3); 
+		numerator += pow((uint32_t)buffer[i]-(uint32_t)first_peak_mean,3); 
 	}
 	
-	skewness[0] =  sample_variance(peak1_left, peak1_right,buffer) ;
+	denominator = sqrt(pow((uint32_t)sample_variance(peak1_left, peak1_right, buffer),3));
+	
+	skewness[0] =  (int32_t)nr_of_samples*numerator / ((int32_t)(nr_of_samples-1)*(nr_of_samples-2)*denominator)  ;
 	
 	
 	numerator = 0;
 	denominator = 0;
+	nr_of_samples = peak2_right-peak2_left;
 	
 	for (uint16_t i = peak2_left; i < peak2_right; i++)
 	{
-		numerator += pow((buffer[i]-second_peak_mean),3);
+		numerator += pow((uint32_t)buffer[i]-(uint32_t)second_peak_mean,3); 
 	}
 	
-	skewness[1] = ((peak2_right - peak2_left - 2)*pow(sample_variance(peak2_left, peak2_right,buffer),3)) ;
+	denominator = sqrt(pow((uint32_t)sample_variance(peak2_left, peak2_right, buffer),3));
+	
+	skewness[1] = (int32_t)nr_of_samples*numerator / ((int32_t)(nr_of_samples-1)*(nr_of_samples-2)*denominator);
 	
 }
 
@@ -253,11 +258,100 @@ void show_beam_parameters(uint16_t* buffer)
  	compute_beam_intensity(peaks_localization[1], peaks_localization[2], peaks_localization[4], peaks_localization[5], buffer);
  	fwhm = compute_fwhm(buffer, find_max(buffer, half_cycle_length), find_max(buffer + half_cycle_length, half_cycle_length));
  	//compute_skewness(peaks_localization[1], peaks_localization[2], peaks_localization[4], peaks_localization[5],buffer);
+
  //	printf("%u:Peak X pinnacle : %u, Peak Y pinnacle : %u ,X intensity : %u, Y intensity : %u, FWHM X: ,FWHM Y: ,skewness X: %u, skewness Y: %u\n\r",count++,peaks_localization[0],peaks_localization[3],beam_intensity[0],beam_intensity[1],skewness[0],skewness[1]);
  //	printf("%u: %u %u %u %u %u %u\n\r",count++,peaks_localization[0],peaks_localization[3],beam_intensity[0],beam_intensity[1],skewness[0],skewness[1]);
 
 	
-	printf("%u BPM-80 beam characteristics \n\r",count++);
+
+	
+	/*
+	printf(".");
+	for (uint16_t i = 0; i < buffersize; i++)
+	{
+		uint16_t sample = buffer[i];
+		//uint16_t  sample_swapped_bytes = ((sample<<8)&0xff00)|((sample>>8)&0x00ff);
+		usart_serial_write_packet(CONF_UART, &sample,2);
+	}
+	*/
+	
+	uint16_t peak_info[7] = {0,0,0,0,0,0,9999};
+	
+	
+	
+	for (uint16_t i = 0; i < 6; i++)
+	{
+		 peak_info[i] = peaks_localization[i];
+	}
+	
+	uint16_t peak_width1 = peak_info[2] - peak_info[1] + 1;
+	uint16_t peak_one_plot_data[peak_width1];
+	uint16_t peak_width2 = peak_info[5] - peak_info[4] + 1;
+	uint16_t peak_two_plot_data[peak_width2];
+	
+	
+	for (uint16_t i = 0; i < peak_width1-1; i++)
+	{
+		peak_one_plot_data[i] =  buffer[peak_info[1] + i];
+	}
+	
+	peak_one_plot_data[peak_width1-1] = 8888; 
+	
+	for (uint16_t i = 0; i < peak_width2-1; i++)
+	{
+		peak_two_plot_data[i] =  buffer[peak_info[4] + i];
+	}
+	
+	peak_two_plot_data[peak_width2-1] = 7777; 
+	
+	
+	
+	uint16_t beam_parameters[7] = {0,0,0,0,0,0,0};
+	
+	beam_parameters[0] = beam_intensity[0];
+	beam_parameters[1] = beam_intensity[1];
+	beam_parameters[2] = skewness[0];
+	beam_parameters[3] = skewness[1];
+	beam_parameters[4] = fwhm[0];
+	beam_parameters[5] = fwhm[1];
+	beam_parameters[6] = 6666;
+		
+	
+	
+	
+	for (uint16_t i = 0; i < 7; i++)
+    {
+		usart_serial_write_packet(CONF_UART, peak_info+i,2);
+				
+	}
+	
+	for (uint16_t i = 0; i < peak_width1; i++)
+	{
+		usart_serial_write_packet(CONF_UART, peak_one_plot_data + i,2);
+	}
+	
+	for (uint16_t i = 0; i < peak_width2; i++)
+	{
+		usart_serial_write_packet(CONF_UART, peak_two_plot_data + i,2);
+	}
+	
+	for (uint16_t i = 0; i < 7; i++)
+	{
+		usart_serial_write_packet(CONF_UART, beam_parameters + i,2);
+	}
+		
+		
+	/*	
+				
+		
+		
+
+	
+	uint16_t separate= 9999;
+	usart_serial_write_packet(CONF_UART, &separate,2); */
+	
+	/*
+	printf("%BPM-80 beam characteristics \n\r",count++);
 	printf("************************************************\n\r\r");
 	
 	printf("Peak localization : \n\n\r");
@@ -292,6 +386,7 @@ void show_beam_parameters(uint16_t* buffer)
 	printf("Y skewness : ");
 	print_float(skewness[1]);
 	
+	*/
 }
 
 
@@ -328,6 +423,37 @@ uint16_t* detect_peaks_dispersion(uint16_t lag, uint8_t sigma_limits, uint8_t in
 	}
 }
 
+SKEWNESS
+
+	uint16_t first_peak_mean  =  sample_average(peak1_left, peak1_right,buffer);
+	uint16_t second_peak_mean =  sample_average(peak2_left, peak2_right,buffer);
+	
+	uint32_t numerator = 0;
+	uint32_t denominator = 0;
+	uint16_t nr_of_samples = peak1_right-peak1_left;
+	
+	for (uint16_t i = peak1_left; i < peak1_right; i++)
+	{
+		numerator += pow((uint32_t)buffer[i]-(uint32_t)first_peak_mean,3);
+	}
+	
+	denominator = sqrt(pow((uint32_t)sample_variance(peak1_left, peak1_right, buffer),3));
+	
+	skewness[0] =  (int32_t)nr_of_samples*numerator / ((int32_t)(nr_of_samples-1)*(nr_of_samples-2)*denominator)  ;
+	
+	
+	numerator = 0;
+	denominator = 0;
+	nr_of_samples = peak2_right-peak2_left;
+	
+	for (uint16_t i = peak2_left; i < peak2_right; i++)
+	{
+		numerator += pow((uint32_t)buffer[i]-(uint32_t)second_peak_mean,3);
+	}
+	
+	denominator = sqrt(pow((uint32_t)sample_variance(peak2_left, peak2_right, buffer),3));
+	
+	skewness[1] = (int32_t)nr_of_samples*numerator / ((int32_t)(nr_of_samples-1)*(nr_of_samples-2)*denominator);
 
 
 
