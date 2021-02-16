@@ -23,7 +23,7 @@ uint16_t peaks_localization[6] = {0,0,0,0,0,0};
 uint16_t beam_intensity[2] = {0,0};
 float skewness[2] = {0,0};	
 uint8_t count=1;
-	
+uint16_t fwhm[2]={0,0};	
 	
 /* Allows to convert integer sample value to float */
 
@@ -181,12 +181,29 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 	}
 	
 }
-
+ uint16_t sqr( int x){
+	return(x*x);
+}
 /* Compute FWHM X and Y */
 
-void compute_fwhm(uint16_t max_X, uint16_t max_Y)
+void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right,uint16_t* buffer)
 {
-	/*algorithm to compute FWHM*/ 
+	uint16_t mean[2] = {0,0};
+	
+	mean[0] = sample_average(peak1_left, peak1_right,buffer);
+	mean[1] = sample_average(peak2_left, peak2_right,buffer);
+	
+	for (uint16_t i=peak1_left;i<peak1_right:i++ )
+	{
+		fwhm[0]+= sqr((buffer[i]-mean[0]));
+	}
+	fwhm[0]=fwhm[0]/(peak1_right-peak1_left);
+	
+	for (uint16_t i=peak2_left;i<peak2_right:i++ )
+	{
+		fwhm[1]+= sqr((buffer[i]-mean[1]));
+	}
+	fwhm[1]=fwhm[1]/(peak2_right-peak2_left);
 }
 
 
@@ -234,7 +251,7 @@ void show_beam_parameters(uint16_t* buffer)
 	
  	detect_peaks(20, buffer);
  	compute_beam_intensity(peaks_localization[1], peaks_localization[2], peaks_localization[4], peaks_localization[5], buffer);
- 	//fwhm = compute_fwhm(buffer, find_max(buffer, half_cycle_length), find_max(buffer + half_cycle_length, half_cycle_length));
+ 	fwhm = compute_fwhm(buffer, find_max(buffer, half_cycle_length), find_max(buffer + half_cycle_length, half_cycle_length));
  	//compute_skewness(peaks_localization[1], peaks_localization[2], peaks_localization[4], peaks_localization[5],buffer);
  //	printf("%u:Peak X pinnacle : %u, Peak Y pinnacle : %u ,X intensity : %u, Y intensity : %u, FWHM X: ,FWHM Y: ,skewness X: %u, skewness Y: %u\n\r",count++,peaks_localization[0],peaks_localization[3],beam_intensity[0],beam_intensity[1],skewness[0],skewness[1]);
  //	printf("%u: %u %u %u %u %u %u\n\r",count++,peaks_localization[0],peaks_localization[3],beam_intensity[0],beam_intensity[1],skewness[0],skewness[1]);
@@ -261,10 +278,10 @@ void show_beam_parameters(uint16_t* buffer)
 	printf("Y intensity : %u \n\r", beam_intensity[1]);
 	printf("Total intensity : %u \n\n\r\r", beam_intensity[0] + beam_intensity[1]);
 	
-	//printf("Beam FWHM: \n\n");
+	printf("Beam FWHM: \n\n");
 	
-	//printf("X FWHM : %u \n", fwhm[0]);
-	//printf("Y FWHM : %u \n\n", fwhm[1]);
+	printf("X FWHM : %u \n", fwhm[0]);
+	printf("Y FWHM : %u \n\n", fwhm[1]);
 	
 	printf("Beam skewness: \n\n\r");
 	printf("---------------------------------------\n\n\r");
