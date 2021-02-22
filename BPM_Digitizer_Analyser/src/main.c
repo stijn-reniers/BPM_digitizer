@@ -254,7 +254,7 @@ int main (void)
 	bool loop=true;
 	while (1) {
 		if(getbuffersFilled()==100){
-			break;
+			//break;
 		}
 		if(fullBuffer){
 			fullBuffer=false;
