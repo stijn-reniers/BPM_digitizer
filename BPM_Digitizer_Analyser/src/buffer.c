@@ -10,44 +10,38 @@
 
 uint16_t buffer0[buffersize]={ 0 };
 uint16_t buffer1[buffersize]={ 0 };
+uint16_t buffer2[buffersize]={ 0 };
+uint16_t* fillBuffer= buffer0;
+uint16_t* calculateBuffer= buffer1;
+uint16_t* transmitBuffer= buffer2;
 uint16_t bufferIndex=0;
 uint16_t buffersFilled=0;
 bool currentbuffer=false;
 bool printed=false;
 
 
-void sendBuffer(void){
-	if (!printed)
-	{
-		printed=true;
-		for(int i=0; i<buffersize;i){
-			uint16_t sample = buffer0[i];
-			uint16_t sample_swapped_bytes = ((sample<<8)&0xff00)|((sample>>8)&0x00ff);
-			usart_serial_write_packet(CONF_UART, &sample_swapped_bytes ,2);
-		}
-	}	
-}
-
 void addSample(uint16_t sample){
 	if (bufferIndex<buffersize)
 	{
-		if (currentbuffer)
-		{
-			//puts("filling buffer 1\n");
-			buffer1[bufferIndex]= sample;
-		}else{
-			//puts("filling buffer 0\n");
-			buffer0[bufferIndex]= sample;
-		}
+		fillBuffer[bufferIndex]= sample;
 		bufferIndex++;
 	}
 }
-
+void swap(uint16_t* x, uint16_t* y){
+	uint16_t* temp = x;
+	x=y;
+	y=temp;
+}
 volatile void switchBuffer(void){
+	
 	buffersFilled++;
+	if (buffersFilled>15)
+	{
+		buffersFilled=0;
+		swap(calculateBuffer,transmitBuffer);
+	}
 	bufferIndex=0;
-	//puts("buffer index reset\n");
-	currentbuffer= !currentbuffer;
+	swap(fillBuffer,calculateBuffer);
 }
 
 void cycleEnded(void){
@@ -68,6 +62,15 @@ uint16_t getbuffersFilled(){
 	return buffersFilled;
 }
 
+
+uint16_t* getFilledBuffer(void){
+	return calculateBuffer;
+}
+uint16_t* getTransmitBuffer(void){
+	return transmitBuffer;
+}
+
+
 void testPrint(void){
 	puts("first buffer:\n\r");
 	for(int i=0; i<buffersize;i++){
@@ -79,13 +82,14 @@ void testPrint(void){
 	}
 }
 
-uint16_t* getFilledBuffer(void){
-	if (currentbuffer)
+void sendBuffer(void){
+	if (!printed)
 	{
-		return buffer0;
-	} 
-	else
-	{
-		return buffer1;
+		printed=true;
+		for(int i=0; i<buffersize;i){
+			uint16_t sample = buffer0[i];
+			uint16_t sample_swapped_bytes = ((sample<<8)&0xff00)|((sample>>8)&0x00ff);
+			usart_serial_write_packet(CONF_UART, &sample_swapped_bytes ,2);
+		}
 	}
 }

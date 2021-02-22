@@ -121,23 +121,6 @@ static void configure_console(void)
 	stdio_serial_init(CONF_UART, &uart_serial_options);					// Setting UART as the stdio device, passing the options by reference
 }
 
-/* Send sample value over UART stdio */
-
-/*static void print_sample(uint16_t sample)
-{
-	uint32_t zero = 0;
-	if(usart_is_tx_ready(CONF_UART)){
-		usart_serial_putchar(CONF_UART,sample);
-	}
-	//usart_write(CONF_UART,zero);
-	
-	
-	//float voltage  = ((float)sample/4096)*3.3;
-	printf("%u\n\r", sample);
-	
-	
-}*/
-
 /* Configure to trigger interrupt-driven AFEC by TIOA output of timer at the desired sample rate.*/
 
 static void configure_tc_trigger(void)
@@ -192,37 +175,15 @@ static void set_afec_test(void)
 }
 
 static void configureDACC(void){
-	/* Enable clock for DACC */
 	pmc_enable_periph_clk(ID_DACC);
-	/* Reset DACC registers */
 	dacc_reset(DACC);
-	/* External trigger mode disabled. DACC in free running mode. */
 	dacc_disable_trigger(DACC);
-	/* Half word transfer mode */
 	dacc_set_transfer_mode(DACC, 0);
-	/* Timing:
-	 * max speed mode -    0 (disabled)
-	 * startup time   - 0xf (960 dacc clocks)
-	 */
 	dacc_set_timing(DACC, 0, 0xf);
-	/* Disable TAG and select output channel DACC_CHANNEL */
 	dacc_set_channel_selection(DACC, DACC_CHANNEL_0);
-	/* Enable output channel DACC_CHANNEL */
-	dacc_enable_channel(DACC, DACC_CHANNEL_0);
-	/* Setup analog current */
+	dacc_enable_channel(DACC, DACC_CHANNEL_0);	
 	dacc_set_analog_control(DACC, DACC_ANALOG_CONTROL);
-
-	/* Set DAC0 output at ADVREF/2. The DAC formula is:
-	 *
-	 * (5/6 * VOLT_REF) - (1/6 * VOLT_REF)     volt - (1/6 * VOLT_REF)
-	 * ----------------------------------- = --------------------------
-	 *              MAX_DIGITAL                       digit
-	 *
-	 * Here, digit = MAX_DIGITAL/2
-	 */
 	dacc_write_conversion_data(DACC, 3100);
-	
-
 }
 
 int main (void)
