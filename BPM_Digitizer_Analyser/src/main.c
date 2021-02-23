@@ -219,7 +219,7 @@ int main (void)
 		}
 		if(fullBuffer){
 			fullBuffer=false;
-			show_beam_parameters(getFilledBuffer());
+			show_beam_parameters(getFilledBuffer(),getTransmitBuffer());
 		}
 		
 		

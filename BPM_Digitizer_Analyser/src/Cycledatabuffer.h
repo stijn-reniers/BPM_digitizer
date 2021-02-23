@@ -24,7 +24,8 @@ uint16_t beam_intensity[2] = {0,0};
 double skewness[2] = {0,0};	
 uint16_t fwhm[2] = {0,0};
 uint8_t count=1;
-
+uint16_t currentIndex=0;
+uint16_t sendQuota=0;
 	
 /* Allows to convert integer sample value to float */
 
@@ -258,7 +259,7 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 
 /* Present beam parameters on terminal*/
 
-void show_beam_parameters(uint16_t* buffer)
+void show_beam_parameters(uint16_t* buffer,uint16_t* transmitBuffer)
 {
 	
  	detect_peaks(20, buffer);
@@ -306,24 +307,16 @@ void show_beam_parameters(uint16_t* buffer)
 	beam_parameters[3] = fwhm[1];
 			
 	
-	
+	uint16_t delimiter = 6666;
+	usart_serial_write_packet(CONF_UART, &delimiter,2);
 	
 	for (uint16_t i = 0; i < 7; i++)
     {
 		usart_serial_write_packet(CONF_UART, peak_info+i,2);
 				
 	}
-	
-	for (uint16_t i = 0; i < peak_width1; i++)
-	{
-		usart_serial_write_packet(CONF_UART, peak_one_plot_data + i,2);
-	}
-	
-	for (uint16_t i = 0; i < peak_width2; i++)
-	{
-		usart_serial_write_packet(CONF_UART, peak_two_plot_data + i,2);
-	}
-	
+
+
 	for (uint16_t i = 0; i < 4; i++)
 	{
 		usart_serial_write_packet(CONF_UART, beam_parameters + i,2);
@@ -334,8 +327,39 @@ void show_beam_parameters(uint16_t* buffer)
 		usart_serial_write_packet(CONF_UART, skewness + i,8);
 	}
 	
-	uint16_t delimiter = 6666;
-	usart_serial_write_packet(CONF_UART, &delimiter,2);
+	sendQuota+=556;
+	if(sendQuota>8334){
+		sendQuota= 8334;
+	}
+	uint16_t transmissionLength= sendQuota- currentIndex;
+	usart_serial_write_packet(CONF_UART,8888,2);
+	usart_serial_write_packet(CONF_UART,sendQuota,2);
+	usart_serial_write_packet(CONF_UART,currentIndex,2);
+	for(uint16_t i=currentIndex; i<sendQuota;i+=2 ){
+		usart_serial_write_packet(CONF_UART,transmitBuffer[i],2);
+	}
+	if (sendQuota== 8334)
+	{
+		sendQuota=0;
+		currentIndex=0;
+	} 
+	else
+	{
+		currentIndex= sendQuota;
+	}
+	/*for (uint16_t i = 0; i < peak_width1; i++)
+	{
+		usart_serial_write_packet(CONF_UART, peak_one_plot_data + i,2);
+	}
+	
+	for (uint16_t i = 0; i < peak_width2; i++)
+	{
+		usart_serial_write_packet(CONF_UART, peak_two_plot_data + i,2);
+	}*/
+	
+	
+	
+	
 		
 		
 	/*	

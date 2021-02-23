@@ -13,7 +13,7 @@ a = zeros(600,1);
 s = serialport('COM5', 115200); %assigns the object s to serial port
 peak_info = zeros(6,1);
 beam_params = zeros(6,1);
-
+plottingData = zeros(8334,1);
 %figure('Name','BPM-80 Peak Analyzer');
 
 for i = 1:25
@@ -39,8 +39,20 @@ for i = 1:25
         disp(".");
     end
     
-    for i = 1:peak_width_1
-        peak1(i) = read(s,1,'uint16');
+    for i = 1:6
+        beam_params(i) = read(s,1,'uint16');
+    end
+    
+    while read(s,1,'uint16') ~= 8888
+        disp(";");
+    end
+    endPoint= read(s,1,'uint16');
+    start= read(s,1,'uint16');
+    for i = start: endPoint 
+        plottingData(i)= read(s,1,'uint16');
+        if(i==8334)
+            plot(plottingData)
+        end
     end
     
     subplot(2,2,1);
@@ -54,20 +66,11 @@ for i = 1:25
     
     %   Display Y crossectional peak
     
-    peak_width_2 = peak_info(6)-peak_info(5);
-    peak2 = zeros(peak_width_2,1);
     
-    while read(s,1,'uint16') ~= 8888
-        disp(";");
-    end
     
-    for i = 1:peak_width_2
-        peak2(i) = read(s,1,'uint16');
-    end
     
-    subplot(2,2,2);
-    plot(peak2);
-    title('2-dimensional profile of Y-peak');
+    
+  
     
     txt = {'Beam position: ',['------------------------'] ,['peak left edge   : ' num2str(peak_info(5))], ...
         ['peak centre       : ' num2str(peak_info(4))], ...
@@ -78,9 +81,7 @@ for i = 1:25
     while read(s,1,'uint16') ~= 7777
         disp(";");
     end
-    for i = 1:6
-        beam_params(i) = read(s,1,'uint16');
-    end
+    
     %% Create surface plot
     
     subplot(2,2,3);
