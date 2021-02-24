@@ -305,7 +305,14 @@ void show_beam_parameters(uint16_t* buffer,uint16_t* transmitBuffer)
 	beam_parameters[1] = beam_intensity[1];
 	beam_parameters[2] = fwhm[0];
 	beam_parameters[3] = fwhm[1];
-			
+	
+	/*uint16_t loadCheck=7777; // load checked: system is able to send about 600 bytes after the algorithms
+	for (uint16_t i=0; i<300;i++)
+	{
+		loadCheck=i;
+		//loadCheck=((i<<8)&0xff00)|((i>>8)&0x00ff);;
+		usart_serial_write_packet(CONF_UART,&loadCheck,2);
+	}*/
 	
 	uint16_t delimiter = 6666;
 	usart_serial_write_packet(CONF_UART, &delimiter,2);
@@ -315,7 +322,6 @@ void show_beam_parameters(uint16_t* buffer,uint16_t* transmitBuffer)
 		usart_serial_write_packet(CONF_UART, peak_info+i,2);
 				
 	}
-
 
 	for (uint16_t i = 0; i < 4; i++)
 	{
@@ -327,18 +333,18 @@ void show_beam_parameters(uint16_t* buffer,uint16_t* transmitBuffer)
 		usart_serial_write_packet(CONF_UART, skewness + i,8);
 	}
 	
-	sendQuota+=556;
-	if(sendQuota>8334){
-		sendQuota= 8334;
+	sendQuota+=250;
+	if(sendQuota>4167){
+		sendQuota= 4167;
 	}
-	uint16_t transmissionLength= sendQuota- currentIndex;
-	usart_serial_write_packet(CONF_UART,8888,2);
-	usart_serial_write_packet(CONF_UART,sendQuota,2);
-	usart_serial_write_packet(CONF_UART,currentIndex,2);
-	for(uint16_t i=currentIndex; i<sendQuota;i+=2 ){
-		usart_serial_write_packet(CONF_UART,transmitBuffer[i],2);
+	uint16_t signal = 8888;
+	usart_serial_write_packet(CONF_UART,&signal,2);
+	usart_serial_write_packet(CONF_UART,&sendQuota,2);
+	usart_serial_write_packet(CONF_UART,&currentIndex,2);
+	for(uint16_t i=currentIndex; i<sendQuota;i++ ){
+		usart_serial_write_packet(CONF_UART,transmitBuffer+(2*i),2);
 	}
-	if (sendQuota== 8334)
+	if (sendQuota== 4167)
 	{
 		sendQuota=0;
 		currentIndex=0;
@@ -347,6 +353,8 @@ void show_beam_parameters(uint16_t* buffer,uint16_t* transmitBuffer)
 	{
 		currentIndex= sendQuota;
 	}
+	
+	
 	/*for (uint16_t i = 0; i < peak_width1; i++)
 	{
 		usart_serial_write_packet(CONF_UART, peak_one_plot_data + i,2);

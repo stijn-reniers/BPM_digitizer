@@ -22,5 +22,5 @@ uint16_t getbuffersFilled(void);
 void testPrint(void);
 uint16_t* getFilledBuffer(void);
 uint16_t* getTransmitBuffer(void);
-void swap(uint16_t* x, uint16_t* y);
+void swap(uint16_t** x, uint16_t** y);
 #endif /* BUFFER_H_ */

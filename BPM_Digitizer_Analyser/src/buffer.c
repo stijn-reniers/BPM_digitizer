@@ -27,21 +27,22 @@ void addSample(uint16_t sample){
 		bufferIndex++;
 	}
 }
-void swap(uint16_t* x, uint16_t* y){
-	uint16_t* temp = x;
-	x=y;
-	y=temp;
+void swap(uint16_t** x, uint16_t** y){
+	uint16_t* temp = *x;
+	*x=*y;
+	*y=temp;
 }
 volatile void switchBuffer(void){
 	
 	buffersFilled++;
-	if (buffersFilled>15)
+	if (buffersFilled>16)
 	{
 		buffersFilled=0;
-		swap(calculateBuffer,transmitBuffer);
+		swap(&calculateBuffer,&transmitBuffer);
 	}
+	
 	bufferIndex=0;
-	swap(fillBuffer,calculateBuffer);
+	swap(&fillBuffer,&calculateBuffer);
 }
 
 void cycleEnded(void){
@@ -79,6 +80,10 @@ void testPrint(void){
 	puts("second buffer:\n\r");
 	for(int i=0; i<buffersize;i++){
 		printf("%u\n\r", buffer1[i]);
+	}
+	puts("third buffer:\n\r");
+	for(int i=0; i<buffersize;i++){
+		printf("%u\n\r", buffer2[i]);
 	}
 }
 

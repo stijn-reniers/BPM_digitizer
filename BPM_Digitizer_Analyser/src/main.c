@@ -214,7 +214,7 @@ int main (void)
 	acc_enable_interrupt(ACC);
 	bool loop=true;
 	while (1) {
-		if(getbuffersFilled()==100){
+		if(getbuffersFilled()==20){
 			//break;
 		}
 		if(fullBuffer){

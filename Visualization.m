@@ -10,13 +10,13 @@ delete(s);
 %% Create COM port object to communicate with SAM4E Xplained Pro
 
 a = zeros(600,1);
-s = serialport('COM5', 115200); %assigns the object s to serial port
+s = serialport('COM4', 115200); %assigns the object s to serial port
 peak_info = zeros(6,1);
 beam_params = zeros(6,1);
-plottingData = zeros(8334,1);
+plottingData = zeros(4167,1);
 %figure('Name','BPM-80 Peak Analyzer');
 
-for i = 1:25
+for i = 1:50
     
     %% Read the data samples of an individual BPM-80 cycle (for testing purposes)
     
@@ -44,14 +44,15 @@ for i = 1:25
     end
     
     while read(s,1,'uint16') ~= 8888
-        disp(";");
+        disp("8");
     end
-    endPoint= read(s,1,'uint16');
-    start= read(s,1,'uint16');
-    for i = start: endPoint 
+    endPoint= read(s,1,'uint16')
+    start= read(s,1,'uint16')
+    for i = start+1: endPoint 
         plottingData(i)= read(s,1,'uint16');
-        if(i==8334)
-            plot(plottingData)
+        if(i==4167)
+            subplot(2,2,3);
+            plot(plottingData);
         end
     end
     
@@ -77,24 +78,7 @@ for i = 1:25
         ['peak right edge : ' num2str(peak_info(6))]};
     text(63,800,txt)
     
-    
-    while read(s,1,'uint16') ~= 7777
-        disp(";");
-    end
-    
-    %% Create surface plot
-    
-    subplot(2,2,3);
-    
-    grid = zeros(peak_width_1,peak_width_2);
-    [X,Y] = meshgrid(1:1:peak_width_2,1:1:peak_width_1);
-    for i = 1:peak_width_1
-        for j = 1:peak_width_2
-            grid(i,j) = peak1(i)*peak2(j);
-        end
-    end
-    surf(X,Y,grid);
-    title('3 dimensional beam intensity surface plot');
+
     
     
     %% Create beam parameter window
@@ -121,8 +105,6 @@ for i = 1:25
 end
 
 
-skew1 = skewness(peak1);
-skew2 = skewness(peak2);
 
 %     for i = 1:6
 %         peak(i) = read(s,1,'uint16');
