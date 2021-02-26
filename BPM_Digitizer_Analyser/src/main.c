@@ -27,6 +27,8 @@
 #include "stdio_serial.h"
 #include "buffer.h"
 #include "Cycledatabuffer.h"
+
+#define delayPin LED0_GPIO
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
 
@@ -63,9 +65,12 @@ static uint32_t g_max_digital;
 
 /** The delay counter value */
 static uint32_t g_delay_cnt;
-int delay=10;
+int delay=35;
 bool triggered= false;
 bool fullBuffer=false;
+bool startedSampling= false;
+int test=0;
+
 /** ------------------------------------------------------------------------------------ */
 /** Function definitions																 */
 /** ------------------------------------------------------------------------------------ */
@@ -80,15 +85,24 @@ void ACC_Handler(void)
 	/* Compare Output Interrupt */
 	if ((ul_status & ACC_ISR_CE) == ACC_ISR_CE) {
 		if (acc_get_comparison_result(ACC)) {
-			//puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
 			if(!triggered){
-				cycleEnded();
-				fullBuffer=true;
+				//puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
+				//fullBuffer=true;
+				startedSampling=false;
+				test=0;
 				triggered= true;
 				if(delay==0){
 					tc_start(TC0,0);
+					cycleEnded();
 				}else{
+					NVIC_DisableIRQ(TC1_IRQn);
+					NVIC_ClearPendingIRQ(TC1_IRQn);
+					NVIC_EnableIRQ((IRQn_Type) ID_TC1);
+					tc_enable_interrupt(TC0, 1, TC_IER_CPCS);
+					afec_enable(AFEC0);
 					tc_start(TC0,1);
+					tc_start(TC0,0);
+					ioport_set_pin_level(delayPin,LED0_ACTIVE_LEVEL);
 				}
 				
 			}				
@@ -100,10 +114,27 @@ void ACC_Handler(void)
 	}
 }
 
+void TC1_Handler(void){
+	startedSampling=true;
+	printf("%d\n\r",test);
+	ioport_set_pin_level(delayPin,LED0_INACTIVE_LEVEL);
+	
+	
+	NVIC_DisableIRQ(TC1_IRQn);
+	tc_disable_interrupt(TC0, 1, TC_IER_CPCS);
+	afec_disable(AFEC0);
+	//cycleEnded();
+	//tc_start(TC0,0);
+	
+}
 /* brief AFEC0 DRDY interrupt callback function. */
 
 static void afec0_data_ready(void)
 {
+	if (!startedSampling)
+	{
+		test++;
+	}
 	g_afec0_sample_data = afec_get_latest_value(AFEC0);					// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
 	addSample(g_afec0_sample_data);
 }
@@ -161,11 +192,7 @@ static void setDelayTimer(int delayFreq){
 	NVIC_EnableIRQ((IRQn_Type) ID_TC1);
 	tc_enable_interrupt(TC0, 1, TC_IER_CPCS);
 }
-void TC1_Handler(void){
-	tc_stop(TC0,1);
-	printf("delay finished");
-	tc_start(TC0,0);
-}
+
 static void set_afec_test(void)
 {
 	struct afec_config afec_cfg;
@@ -213,10 +240,11 @@ int main (void)
 	board_init();
 	configure_console();
 	configureDACC();
+	
+	ioport_set_pin_dir(delayPin,IOPORT_DIR_OUTPUT);
 	g_afec0_sample_data = 0;
 	g_max_digital = MAX_DIGITAL_12_BIT;
 	set_afec_test();
-	
 	pmc_enable_periph_clk(ID_ACC);
 	acc_init(ACC, ACC_MR_SELPLUS_AD7, ACC_MR_SELMINUS_DAC1,
 	ACC_MR_EDGETYP_ANY, ACC_MR_INV_DIS);
@@ -226,11 +254,11 @@ int main (void)
 		if(getbuffersFilled()==100){
 			//break;
 		}
+					
 		if(fullBuffer){
 			fullBuffer=false;
 			show_beam_parameters(getFilledBuffer());
 		}
-		
 		
 		
 	}

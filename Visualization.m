@@ -10,7 +10,7 @@ delete(s);
 %% Create COM port object to communicate with SAM4E Xplained Pro
 
 a = zeros(600,1);
-s = serialport('COM5', 115200); %assigns the object s to serial port
+s = serialport('COM4', 115200); %assigns the object s to serial port
 peak_info = zeros(6,1);
 beam_params = zeros(6,1);
 
@@ -116,7 +116,7 @@ for i = 1:25
     h = text(0,0.6,beam_str);
     set ( ax, 'visible', 'off')
     
-
+    pause(0.001);
 end
 
 
