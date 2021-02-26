@@ -65,7 +65,7 @@ static uint32_t g_max_digital;
 
 /** The delay counter value */
 static uint32_t g_delay_cnt;
-int delay=35;
+int delay=20;
 bool triggered= false;
 bool fullBuffer=false;
 bool startedSampling= false;
@@ -74,7 +74,7 @@ int test=0;
 /** ------------------------------------------------------------------------------------ */
 /** Function definitions																 */
 /** ------------------------------------------------------------------------------------ */
-
+static void setDelayTimer(int delayFreq);
 /**
  * Interrupt handler for the ACC.
  */
@@ -87,7 +87,7 @@ void ACC_Handler(void)
 		if (acc_get_comparison_result(ACC)) {
 			if(!triggered){
 				//puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
-				//fullBuffer=true;
+				fullBuffer=true;
 				startedSampling=false;
 				test=0;
 				triggered= true;
@@ -95,13 +95,9 @@ void ACC_Handler(void)
 					tc_start(TC0,0);
 					cycleEnded();
 				}else{
-					NVIC_DisableIRQ(TC1_IRQn);
-					NVIC_ClearPendingIRQ(TC1_IRQn);
-					NVIC_EnableIRQ((IRQn_Type) ID_TC1);
-					tc_enable_interrupt(TC0, 1, TC_IER_CPCS);
-					afec_enable(AFEC0);
+					setDelayTimer(delay);
 					tc_start(TC0,1);
-					tc_start(TC0,0);
+					//tc_start(TC0,0);
 					ioport_set_pin_level(delayPin,LED0_ACTIVE_LEVEL);
 				}
 				
@@ -116,15 +112,16 @@ void ACC_Handler(void)
 
 void TC1_Handler(void){
 	startedSampling=true;
-	printf("%d\n\r",test);
+	//printf("%d\n\r",test);
 	ioport_set_pin_level(delayPin,LED0_INACTIVE_LEVEL);
 	
 	
 	NVIC_DisableIRQ(TC1_IRQn);
+	NVIC_ClearPendingIRQ(TC1_IRQn);
 	tc_disable_interrupt(TC0, 1, TC_IER_CPCS);
-	afec_disable(AFEC0);
-	//cycleEnded();
-	//tc_start(TC0,0);
+	tc_stop(TC0,1);
+	cycleEnded();
+	tc_start(TC0,0);
 	
 }
 /* brief AFEC0 DRDY interrupt callback function. */
