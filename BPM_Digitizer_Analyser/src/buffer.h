@@ -14,6 +14,17 @@
 #include <string.h>
 #define buffersize 8334
 
+/* Pointer to the buffer containing the data samples being acquired from the ADC */
+uint16_t *afec_buffer;
+
+/* Pointer to the buffer containing the data samples ready for processing */
+uint16_t *algorithm_buffer;
+
+/* Pointer to the buffer containing the data samples ready for processing */
+uint16_t *transmit_buffer;
+
+bool send_buffer;
+
 void sendBuffer(void);
 void addSample(uint16_t sample);
 volatile void switchBuffer(void);

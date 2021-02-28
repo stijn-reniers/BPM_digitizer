@@ -142,7 +142,8 @@ src/main.d src/main.o: ../src/main.c \
  ../src/ASF/common/services/delay/sam/cycle_counter.h \
  ../src/ASF/common/services/ioport/ioport.h \
  ../src/ASF/common/services/ioport/sam/ioport_pio.h \
- ../src/ASF/sam/drivers/pmc/sleep.h ../src/ASF/sam/utils/fpu/fpu.h \
+ ../src/ASF/sam/drivers/pdc/pdc.h ../src/ASF/sam/drivers/pmc/sleep.h \
+ ../src/ASF/sam/utils/fpu/fpu.h \
  ../src/ASF/sam/boards/sam4e_xplained_pro/led.h \
  ../src/ASF/common/services/sleepmgr/sam/sleepmgr.h \
  ../src/config/conf_sleepmgr.h \
@@ -153,8 +154,9 @@ src/main.d src/main.o: ../src/main.c \
  ../src/ASF/common/services/serial/sam_uart/uart_serial.h \
  ../src/ASF/sam/drivers/uart/uart.h ../src/ASF/sam/drivers/usart/usart.h \
  ../src/config/conf_uart_serial.h ../src/ASF/sam/drivers/tc/tc.h \
- ../src/config/conf_board.h ../src/buffer.h ../src/Cycledatabuffer.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\math.h
+ ../src/config/conf_board.h ../src/buffer.h ../src/Algorithms.h \
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\math.h \
+ ../src/SerialCommunication_BPM.h
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\stdio.h:
 
@@ -452,6 +454,8 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 
 ../src/ASF/common/services/ioport/sam/ioport_pio.h:
 
+../src/ASF/sam/drivers/pdc/pdc.h:
+
 ../src/ASF/sam/drivers/pmc/sleep.h:
 
 ../src/ASF/sam/utils/fpu/fpu.h:
@@ -484,6 +488,8 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 
 ../src/buffer.h:
 
-../src/Cycledatabuffer.h:
+../src/Algorithms.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\math.h:
+
+../src/SerialCommunication_BPM.h:

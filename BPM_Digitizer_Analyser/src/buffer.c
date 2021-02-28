@@ -4,55 +4,62 @@
  * Created: 10/02/2021 11:12:47
  *  Author: Decoster
  */ 
+
 #include "buffer.h"
 #include <stdio.h>
 #include <stdbool.h>
-
-uint16_t buffer0[buffersize]={ 0 };
-uint16_t buffer1[buffersize]={ 0 };
+	
 uint16_t bufferIndex=0;
 uint16_t buffersFilled=0;
+
 bool currentbuffer=false;
 bool printed=false;
 
+uint16_t buffer0[buffersize]={ 0 };
+uint16_t buffer1[buffersize]={ 0 };
+uint16_t buffer2[buffersize]={ 0 };
 
-void sendBuffer(void){
-	if (!printed)
-	{
-		printed=true;
-		for(int i=0; i<buffersize;i){
-			uint16_t sample = buffer0[i];
-			uint16_t sample_swapped_bytes = ((sample<<8)&0xff00)|((sample>>8)&0x00ff);
-			usart_serial_write_packet(CONF_UART, &sample_swapped_bytes ,2);
-		}
-	}	
-}
+
+uint16_t* afec_buffer = buffer0;
+uint16_t* algorithm_buffer = buffer1;
+uint16_t* transmit_buffer = buffer2;
+
+bool send_buffer = false;
+
 
 void addSample(uint16_t sample){
+	
 	if (bufferIndex<buffersize)
 	{
-		if (currentbuffer)
-		{
-			//puts("filling buffer 1\n");
-			buffer1[bufferIndex]= sample;
-		}else{
-			//puts("filling buffer 0\n");
-			buffer0[bufferIndex]= sample;
-		}
+		afec_buffer[bufferIndex]= sample;
 		bufferIndex++;
 	}
+	
+}
+
+void swap(uint16_t** x, uint16_t** y){
+	uint16_t* temp = *x;
+	*x=*y;
+	*y=temp;
 }
 
 volatile void switchBuffer(void){
+	
 	buffersFilled++;
+	if (buffersFilled>16)
+	{
+		send_buffer = true ;
+		buffersFilled=0; 
+		swap(&algorithm_buffer, &transmit_buffer);
+	} else send_buffer = false;
+	
 	bufferIndex=0;
-	//puts("buffer index reset\n");
-	currentbuffer= !currentbuffer;
+	swap(&afec_buffer, &algorithm_buffer);
 }
 
 void cycleEnded(void){
-	//printf("%u\n\r", bufferIndex);
-	if (bufferIndex<buffersize)
+	
+	if (bufferIndex < buffersize)
 	{
 		for (int i=bufferIndex;i<buffersize;i++)
 		{
@@ -68,6 +75,17 @@ uint16_t getbuffersFilled(){
 	return buffersFilled;
 }
 
+
+uint16_t* getFilledBuffer(void){
+	return algorithm_buffer;
+}
+
+
+uint16_t* getTransmitBuffer(void){
+	return transmit_buffer;
+}
+
+
 void testPrint(void){
 	puts("first buffer:\n\r");
 	for(int i=0; i<buffersize;i++){
@@ -77,15 +95,20 @@ void testPrint(void){
 	for(int i=0; i<buffersize;i++){
 		printf("%u\n\r", buffer1[i]);
 	}
+	puts("third buffer:\n\r");
+	for(int i=0; i<buffersize;i++){
+		printf("%u\n\r", buffer2[i]);
+	}
 }
 
-uint16_t* getFilledBuffer(void){
-	if (currentbuffer)
+void sendBuffer(void){
+	if (!printed)
 	{
-		return buffer0;
-	} 
-	else
-	{
-		return buffer1;
+		printed=true;
+		for(int i=0; i<buffersize;i){
+			uint16_t sample = buffer0[i];
+			uint16_t sample_swapped_bytes = ((sample<<8)&0xff00)|((sample>>8)&0x00ff);
+			usart_serial_write_packet(CONF_UART, &sample_swapped_bytes ,2);
+		}
 	}
 }

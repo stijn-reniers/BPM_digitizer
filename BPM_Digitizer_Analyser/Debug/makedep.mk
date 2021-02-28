@@ -2,6 +2,12 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\Algorithms.c
+
+src\ASF\sam\drivers\pdc\pdc.c
+
+src\SerialCommunication_BPM.c
+
 src\ASF\common\services\clock\sam4e\sysclk.c
 
 src\ASF\common\services\delay\sam\cycle_counter.c
