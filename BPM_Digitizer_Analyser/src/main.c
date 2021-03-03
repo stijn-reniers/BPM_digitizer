@@ -1,10 +1,8 @@
 /* 
    Authors : Decoster Bram, Reniers Stijn
    Master's thesis project Group T, IMEC
-   BPM-80 Digitization module vertical prototype 1
-  
+   BPM-80 Digitization module 
 */
-
 
 #include <stdio.h>
 #include <string.h>
@@ -20,14 +18,9 @@
 #include "SerialCommunication_BPM.h"
 
 #define delayPin LED0_GPIO
+
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
-
-/** The maximal digital value (unsigned long)*/
-#define MAX_DIGITAL_12_BIT     (4095UL)
-
-/** The maximal digital value */
-#define MAX_DIGITAL (4095)
 
 #define fiducialInput IOPORT_CREATE_PIN(PORTA, 6)
 
@@ -38,30 +31,38 @@
 #define DACC_ANALOG_CONTROL (DACC_ACR_IBCTLCH0(0x02) \
 							| DACC_ACR_IBCTLCH1(0x02) \
 							| DACC_ACR_IBCTLDACCORE(0x01))
+							
+							
+							
 /** ------------------------------------------------------------------------------------ */
-/** Global variable definitions   														 */
+/**								GLOBAL VARIABLES										 */
 /** ------------------------------------------------------------------------------------ */
 
-/** Variables containing the AFEC samples for the 
-	Collector (0) and Fiducial(1) BPM-80 signal  */
-uint16_t g_afec0_sample_data;
+/** Variables containing the AFEC samples for the Collector (0) and Fiducial(1) BPM-80 signal  */
 
+uint16_t collector_sample_data = 0;
+uint16_t fiducial_sample_data = 0;
 
+/** Trigger state of the fiducial */
 
-/** The maximal digital value */
-static uint32_t g_max_digital;
-
-/** The delay counter value */
-static uint32_t g_delay_cnt;
 bool triggered= false;
+
+/** Signal buffer full flag */
+
 bool fullBuffer=false;
+
+/** Indicate start of sampling */
+
 bool startedSampling= false;
-int test=0;
+
 
 /** ------------------------------------------------------------------------------------ */
-/** Function definitions																 */
+/**   Function prototypes																 */
 /** ------------------------------------------------------------------------------------ */
+
 static void setDelayTimer(int delayFreq);
+
+
 /**
  * Interrupt handler for the ACC.
  */
@@ -72,38 +73,34 @@ void ACC_Handler(void)
 	ul_status = acc_get_interrupt_status(ACC);
 	
 	/* Compare Output Interrupt */
+	
 	if ((ul_status & ACC_ISR_CE) == ACC_ISR_CE) {
 		if (acc_get_comparison_result(ACC)) {
+			
+			
 			if(!triggered){
-				//puts("-ISR- Voltage Comparison Result: AD5 > DAC0\r");
-				fullBuffer=true;
-				startedSampling=false;
-				test=0;
 				triggered= true;
+				fullBuffer=true;
 				if(triggerOffset==0){
 					tc_start(TC0,0);
 					cycleEnded();
 				}else{
-					setDelayTimer(triggerOffset);
+					setDelayTimer(1000/triggerOffset);
 					tc_start(TC0,1);
 					ioport_set_pin_level(delayPin,LED0_ACTIVE_LEVEL);
 				}
 				
 			}				
 		} else {
-			
-			//puts("-ISR- Voltage Comparison Result: AD5 < DAC0\r");
-			if(triggered)
+				if(triggered)
 				triggered=false;
 		}
 	}
 }
 
 void TC1_Handler(void){
-	startedSampling=true;
+	
 	ioport_set_pin_level(delayPin,LED0_INACTIVE_LEVEL);
-	
-	
 	NVIC_DisableIRQ(TC1_IRQn);
 	NVIC_ClearPendingIRQ(TC1_IRQn);
 	tc_disable_interrupt(TC0, 1, TC_IER_CPCS);
@@ -112,13 +109,18 @@ void TC1_Handler(void){
 	tc_start(TC0,0);
 	
 }
-/* brief AFEC0 DRDY interrupt callback function. */
 
-static void afec0_data_ready(void)
+
+/* brief AFEC0 (collector input) interrupt callback function. */
+
+static void collector_data_ready(void)
 {
-	g_afec0_sample_data = afec_get_latest_value(AFEC0);					// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
-	addSample(g_afec0_sample_data);
+	collector_sample_data = afec_get_latest_value(AFEC0);										// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
+	addSampleCollector(collector_sample_data);													// Add the sample to the collector signal buffer
+	afec_start_software_conversion(AFEC1);
 }
+
+
 
 
 /* Configure to trigger interrupt-driven AFEC by TIOA output of timer at the desired sample rate.*/
@@ -146,7 +148,12 @@ static void configure_tc_trigger(void)
     afec_set_trigger(AFEC0, AFEC_TRIG_TIO_CH_0);										// Set TC0 as the trigger for AFEC module
 	
 }
+
+
+/* Configure a delay timer to create the desired phase offset configured by the operator */
+
 static void setDelayTimer(int delayFreq){
+	
 	uint32_t ul_sysclk = sysclk_get_cpu_hz();											// returns (possibly prescaled) clock frequency
 	uint32_t ul_div=0;
 	uint32_t ul_tc_clks=0;
@@ -160,37 +167,38 @@ static void setDelayTimer(int delayFreq){
 	NVIC_ClearPendingIRQ(TC1_IRQn);
 	NVIC_EnableIRQ((IRQn_Type) ID_TC1);
 	tc_enable_interrupt(TC0, 1, TC_IER_CPCS);
+	
 }
 
-static void set_afec_test(void)
+/* Configure the AFEC module (afec0, channel 6 and afec1, channel 0) for ADC conversion */
+
+static void configure_afec(void)
 {
 	struct afec_config afec_cfg;
 	struct afec_ch_config afec_ch_cfg;
 
 	afec_enable(AFEC0);
+	
 	afec_get_config_defaults(&afec_cfg);
 	afec_ch_get_config_defaults(&afec_ch_cfg);
 
-		g_delay_cnt = 1000;
-		afec_init(AFEC0, &afec_cfg);
-		afec_init(AFEC1, &afec_cfg);
-		afec_ch_set_config(AFEC0, AFEC_CHANNEL_6, &afec_ch_cfg);
-		afec_ch_set_config(AFEC1, AFEC_CHANNEL_0, &afec_ch_cfg);
-		afec_channel_set_analog_offset(AFEC1, AFEC_CHANNEL_0, 0x800);
-		afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, 0x800);
-		afec_set_trigger(AFEC1, AFEC_TRIG_SW);
-		configure_tc_trigger();
-		
-		/*if(triggerOffset!=0){
-			setDelayTimer(triggerOffset);
-		}*/
-		afec_channel_enable(AFEC1, AFEC_CHANNEL_0);
-		afec_channel_enable(AFEC0, AFEC_CHANNEL_6);
-		afec_set_callback(AFEC0, AFEC_INTERRUPT_DATA_READY, afec0_data_ready, 1);
-		afec_start_calibration(AFEC0);
-		while((afec_get_interrupt_status(AFEC0) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
+	afec_init(AFEC0, &afec_cfg);
+	afec_ch_set_config(AFEC0, AFEC_CHANNEL_6, &afec_ch_cfg);
+	afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, 0x800);
+	
+	configure_tc_trigger();
+	
+	afec_channel_enable(AFEC0, AFEC_CHANNEL_6);
+	afec_set_callback(AFEC0, AFEC_INTERRUPT_DATA_READY, collector_data_ready, 1);
+	
+	afec_start_calibration(AFEC0);
+	while((afec_get_interrupt_status(AFEC0) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
+	
+	
 		
 }
+
+/* Configure the DAC module for comparator trigger level */
 
 static void configureDACC(void){
 	pmc_enable_periph_clk(ID_DACC);
@@ -204,34 +212,37 @@ static void configureDACC(void){
 	dacc_write_conversion_data(DACC, 3100);
 }
 
+/* Main entry point of the application */
+
 int main (void)
 {
+	/* Initializations of peripherals */
+	
 	sysclk_init();
 	board_init();
 	pdc_uart_initialization();
+	configure_afec();
 	configureDACC();
-	
 	ioport_set_pin_dir(delayPin,IOPORT_DIR_OUTPUT);
-	g_afec0_sample_data = 0;
-	g_max_digital = MAX_DIGITAL_12_BIT;
-	set_afec_test();
 	pmc_enable_periph_clk(ID_ACC);
-	acc_init(ACC, ACC_MR_SELPLUS_AD7, ACC_MR_SELMINUS_DAC1,
+	acc_init(ACC, ACC_MR_SELPLUS_AD7, ACC_MR_SELMINUS_DAC0,			// set pin AFEC1 AD1 (EXT1 pin 4) as + comparator and DAC0 as -
 	ACC_MR_EDGETYP_ANY, ACC_MR_INV_DIS);
 	NVIC_EnableIRQ(ACC_IRQn);
 	acc_enable_interrupt(ACC);	
+	
+	/* Main event loop */
+	
 	while (1) {
 		if(getbuffersFilled()==100){
-			//break;
+			
 		}
-					
+		
 		if(fullBuffer){
+			
 			fullBuffer=false;
-			compute_beam_parameters();
 			if (config[2]!= 0) send_beam_parameters();
 			if (config[3]!= 0) send_cycle_plot();
 		}
-		
 		
 	}
 	
@@ -239,7 +250,4 @@ int main (void)
 	tc_stop(TC0, 0);
 	NVIC_DisableIRQ(ACC_IRQn);
 	
-
-	
-		
 }

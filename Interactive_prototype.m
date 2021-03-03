@@ -10,7 +10,6 @@ end
 
 
 %% Create COM port object to communicate with SAM4E Xplained Pro
-
 s = serialport('COM5', 115200);     % assigns object s to serial port
 
 global beam_parameters;             % global parameter, since it is also used in the plotting routines
@@ -43,7 +42,7 @@ refresh_button = uicontrol(subpanel1, 'String', 'Parameter update', 'Position',[
 refresh_button.Callback = {@request_params, s}; % Pass pointer to callback routine, and reference to serial port object
     
 signal_choice  = uicontrol(subpanel1, 'Style', 'popupmenu', 'String', {'Collector signal', 'Fiducial signal'}, 'Position',[50 85 100 20]);
-signal_choice.Callback = @select_signal;
+signal_choice.Callback = {@select_signal, s};
     
 trigger_level = uicontrol(subpanel2, 'Style', 'edit', 'Position',[80 60 40 20]);
 TL_button = uicontrol(subpanel2, 'String', 'Adjust trigger level', 'Position',[50 20 100 20]);
@@ -150,6 +149,8 @@ function request_plot(~, ~, serialport)
     contour(X,Y,grid);
     title('Beam intensity contour plot');
     
+    compute_skewness(beam_parameters(2), beam_parameters(3), plot_data);
+    compute_skewness(beam_parameters(5), beam_parameters(6), plot_data);
 end
 
 % Request the beam parameter info from the microcontroller
@@ -230,10 +231,15 @@ end
 
 %  Possibility to select either collector or fiducial signal for display
 
-function select_signal(src, ~)
+function select_signal(src, ~, serialport)
     val = src.Value;
     str = src.String;
     disp(['chosen signal : ' str{val}]);
+    
+%     write(serialport, 255, 'uint8')
+%     write(serialport, 4, 'uint8');
+%     write(serialport, uint8(val), 'uint8');
+    
 end
 
 % Adjust the threshold voltage level of the fiducial signal for triggering

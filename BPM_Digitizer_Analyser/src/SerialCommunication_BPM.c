@@ -19,7 +19,8 @@
 
 /* Pdc transfer buffer */
 uint8_t host_command[BUFFER_SIZE] = {0};
-uint8_t config[4] = {0};
+uint8_t config[5] = {0};
+
 	
 /* PDC data packet for host computer commands */
 pdc_packet_t g_pdc_uart_packet;
@@ -33,7 +34,6 @@ pdc_packet_t cycle_plot_packet;												// Pass here the address and size of 
 /* Pointer to UART PDC register base (collection of hardware registers)*/
 Pdc *g_p_uart_pdc;
 
-uint32_t counter = 0;
 
 /* Configure UART module with desired settings*/
 
@@ -60,6 +60,7 @@ void send_cycle_plot()
 
 void send_beam_parameters()
 {
+	compute_beam_parameters();
 	pdc_tx_init(g_p_uart_pdc, &beam_parameters_packet, NULL);
 	config[2] = 0;
 }
@@ -77,7 +78,7 @@ void console_uart_irq_handler(void)
 		pdc_rx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);		// pass thee PDC register base and the address of the transfer buffer, will do the transfer until expected amount of data is received (which will trigger interrupt)
 		uint8_t index = host_command[1];
 		config[index] = host_command[2];
-				
+		if (index == 1) dacc_write_conversion_data(DACC, config[1]*16);		
 		pdc_tx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);		// For now, this transfer echoes the received packet that caused this interrupt, but the packet pointer can be set to the databuffer containing plot- or parameter data
 	}
 	
@@ -101,13 +102,12 @@ void pdc_uart_initialization(void)
 	beam_parameters_packet.ul_addr = (uint32_t) beam_parameters;		// start address of transfer packet data is the buffer we defined ourselves
 	beam_parameters_packet.ul_size = 104;
 	
-	cycle_plot_packet.ul_addr = (uint32_t) (transmit_buffer);		// start address of transfer packet data is the buffer we defined ourselves
+	cycle_plot_packet.ul_addr = (uint32_t) transmit_buffer;		// start address of transfer packet data is the buffer we defined ourselves
 	cycle_plot_packet.ul_size = 16668;
 	
 	/* Enable PDC transfers, here we set both transmitter and receiver high (full duplex) */
 	pdc_enable_transfer(g_p_uart_pdc, PERIPH_PTCR_RXTEN | PERIPH_PTCR_TXTEN);
 	pdc_rx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);
-	
 	
 	/* Enable UART IRQ for receive buffer full*/
 	uart_enable_interrupt(CONSOLE_UART, UART_IER_RXBUFF);

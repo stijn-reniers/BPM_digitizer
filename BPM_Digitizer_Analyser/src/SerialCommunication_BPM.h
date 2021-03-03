@@ -12,7 +12,7 @@
 
 /** Configuration parameters **/
 
-uint8_t config[4];
+uint8_t config[5];
 
 
 void pdc_uart_initialization(void);

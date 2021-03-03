@@ -6,10 +6,12 @@
  */ 
 
 #include "buffer.h"
+#include "SerialCommunication_BPM.h"
 #include <stdio.h>
 #include <stdbool.h>
 	
-uint16_t bufferIndex=0;
+uint16_t bufferIndexCollector=0;
+uint16_t bufferIndexFiducial = 0;
 uint16_t buffersFilled=0;
 
 bool currentbuffer=false;
@@ -18,21 +20,34 @@ bool printed=false;
 uint16_t buffer0[buffersize]={ 0 };
 uint16_t buffer1[buffersize]={ 0 };
 uint16_t buffer2[buffersize]={ 0 };
+uint16_t buffer3[buffersize]={ 0 };
 
 
-uint16_t* afec_buffer = buffer0;
-uint16_t* algorithm_buffer = buffer1;
-uint16_t* transmit_buffer = buffer2;
+uint16_t* afec_buffer_collector = buffer0;
+uint16_t* afec_buffer_fiducial = buffer1;
+uint16_t* algorithm_buffer = buffer2;
+uint16_t* transmit_buffer = buffer3;
 
-bool send_buffer = false;
 
 
-void addSample(uint16_t sample){
+
+void addSampleCollector(uint16_t sample){
 	
-	if (bufferIndex<buffersize)
+	if (bufferIndexCollector<buffersize)
 	{
-		afec_buffer[bufferIndex]= sample;
-		bufferIndex++;
+		afec_buffer_collector[bufferIndexCollector]= sample;
+		bufferIndexCollector++;
+	}
+	
+}
+
+void addSampleFiducial(uint16_t sample)
+{
+	
+	if (bufferIndexFiducial<buffersize)
+	{
+		afec_buffer_fiducial[bufferIndexFiducial]= sample;
+		bufferIndexFiducial++;
 	}
 	
 }
@@ -48,22 +63,25 @@ volatile void switchBuffer(void){
 	buffersFilled++;
 	if (buffersFilled>16)
 	{
-		send_buffer = true ;
 		buffersFilled=0; 
 		swap(&algorithm_buffer, &transmit_buffer);
-	} else send_buffer = false;
+	} 
 	
-	bufferIndex=0;
-	swap(&afec_buffer, &algorithm_buffer);
+	bufferIndexCollector=0;
+	bufferIndexFiducial=0;
+	
+	swap(&afec_buffer_collector, &algorithm_buffer);
+	
 }
+
 
 void cycleEnded(void){
 	
-	if (bufferIndex < buffersize)
+	if (bufferIndexCollector < buffersize)
 	{
-		for (int i=bufferIndex;i<buffersize;i++)
+		for (int i=bufferIndexCollector;i<buffersize;i++)
 		{
-			addSample(0);
+			addSampleCollector(0);
 		}
 	} 
 	

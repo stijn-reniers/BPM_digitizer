@@ -15,7 +15,10 @@
 #define buffersize 8334
 
 /* Pointer to the buffer containing the data samples being acquired from the ADC */
-uint16_t *afec_buffer;
+uint16_t* afec_buffer_collector;
+
+/* Pointer to the buffer containing the data samples being acquired from the ADC */
+uint16_t* afec_buffer_fiducial;
 
 /* Pointer to the buffer containing the data samples ready for processing */
 uint16_t *algorithm_buffer;
@@ -26,7 +29,8 @@ uint16_t *transmit_buffer;
 bool send_buffer;
 
 void sendBuffer(void);
-void addSample(uint16_t sample);
+void addSampleCollector(uint16_t sample);
+void addSampleFiducial(uint16_t sample);
 volatile void switchBuffer(void);
 void cycleEnded(void);
 uint16_t getbuffersFilled(void);
