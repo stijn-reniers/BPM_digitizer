@@ -27,11 +27,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  11 .debug_macro  00013f85  00000000  00000000  0003765a  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_line   0000a355  00000000  00000000  0004b5df  2**0
+ 12 .debug_line   00009d6d  00000000  00000000  0004b5df  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_str    00055554  00000000  00000000  00055934  2**0
+ 13 .debug_str    00055537  00000000  00000000  0005534c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_frame  00001c00  00000000  00000000  000aae88  2**2
+ 14 .debug_frame  00001c00  00000000  00000000  000aa884  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -5226,11 +5226,11 @@ __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
   402a0c:	69706d6f 	.word	0x69706d6f
   402a10:	3a64656c 	.word	0x3a64656c
   402a14:	72614d20 	.word	0x72614d20
-  402a18:	20332020 	.word	0x20332020
+  402a18:	20382020 	.word	0x20382020
   402a1c:	31323032 	.word	0x31323032
-  402a20:	3a383120 	.word	0x3a383120
-  402a24:	313a3035 	.word	0x313a3035
-  402a28:	2d2d2039 	.word	0x2d2d2039
+  402a20:	3a343120 	.word	0x3a343120
+  402a24:	313a3831 	.word	0x313a3831
+  402a28:	2d2d2030 	.word	0x2d2d2030
   402a2c:	0000000d 	.word	0x0000000d
 
 00402a30 <_global_impure_ptr>:

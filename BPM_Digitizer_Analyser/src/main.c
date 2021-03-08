@@ -240,6 +240,7 @@ int main (void)
 		if(fullBuffer){
 			
 			fullBuffer=false;
+			//send_beam_parameters();
 			if (config[2]!= 0) send_beam_parameters();
 			if (config[3]!= 0) send_cycle_plot();
 		}

@@ -79,7 +79,7 @@ void console_uart_irq_handler(void)
 		uint8_t index = host_command[1];
 		config[index] = host_command[2];
 		if (index == 1) dacc_write_conversion_data(DACC, config[1]*16);		
-		pdc_tx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);		// For now, this transfer echoes the received packet that caused this interrupt, but the packet pointer can be set to the databuffer containing plot- or parameter data
+		//pdc_tx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);		// For now, this transfer echoes the received packet that caused this interrupt, but the packet pointer can be set to the databuffer containing plot- or parameter data
 	}
 	
 	

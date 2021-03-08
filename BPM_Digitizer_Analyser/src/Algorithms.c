@@ -13,7 +13,7 @@ uint16_t fwhm[2] = {0,0};
 */
 
 
-double beam_parameters[13] = {0};
+//double beam_parameters[14] = {0};
 
 /**************************************************************************************************
  ***************************** BEAM PARAMETER ALGORITHM IMPLEMENTATIONS ***************************
@@ -137,17 +137,17 @@ void detect_peaks(uint16_t threshold)
 
 void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right)
 {
-	beam_parameters[7] = 0;
 	beam_parameters[8] = 0;
+	beam_parameters[9] = 0;
 	
 	for (uint16_t i = peak1_left; i < peak1_right ; i++)
 	{
-		beam_parameters[7] += (uint32_t)algorithm_buffer[i];
+		beam_parameters[8] += (uint32_t)algorithm_buffer[i];
 	}
 	
 	for (uint16_t i = peak2_left; i < peak2_right ; i++)
 	{
-		beam_parameters[8] += (uint32_t)algorithm_buffer[i];
+		beam_parameters[9] += (uint32_t)algorithm_buffer[i];
 	}
 	
 }
@@ -171,7 +171,7 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 	 }
 	 variance=summed/sum(peak1_left,peak1_right);
 	
-	 beam_parameters[9]= (uint16_t)(sqrt(variance)*2.355);
+	 beam_parameters[10]= (uint16_t)(sqrt(variance)*2.355);
 	 summed=0;
 	 variance=0;
 	 for (uint16_t i=peak2_left;i<peak2_right;i++ )
@@ -179,7 +179,7 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 		 summed+= (pow((i-mean[1]),2)*algorithm_buffer[i]);
 	 }
 	 variance=summed/sum(peak2_left,peak2_right);
-	 beam_parameters[10]=(uint16_t) (sqrt(variance)*2.355);
+	 beam_parameters[11]=(uint16_t) (sqrt(variance)*2.355);
  }
 
 
@@ -211,7 +211,7 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	 double denominator = pow(second_central,1.5);
 	 third_central = third_central/denominator;
 	
-	beam_parameters[11] = third_central;
+	beam_parameters[12] = third_central;
 	
 	third_central = 0;
 	second_central = 0;
@@ -230,7 +230,7 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	  denominator = pow(second_central,1.5);
 	  third_central = third_central/denominator;
 	
-	beam_parameters[12] = third_central;
+	beam_parameters[13] = third_central;
 	
 }
 
@@ -246,7 +246,7 @@ void compute_beam_parameters()
  	compute_skewness(beam_parameters[2], beam_parameters[3], beam_parameters[5], beam_parameters[6]);
 	 
 	beam_parameters[0] = 6666;
-	
+	beam_parameters[7]= (double) 7777;
 	
 }
 

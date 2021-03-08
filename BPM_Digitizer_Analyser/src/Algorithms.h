@@ -6,7 +6,7 @@
 #ifndef ALGORITHMS_H_
 #define ALGORITHMS_H_
 
-double beam_parameters[13];
+double beam_parameters[14];
 	
 /**************************************************************************************************
  ***************************** BEAM PARAMETER ALGORITHMS ******************************************
