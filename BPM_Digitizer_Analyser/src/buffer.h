@@ -30,7 +30,6 @@ bool send_buffer;
 
 void sendBuffer(void);
 void addSampleCollector(uint16_t sample);
-void addSampleFiducial(uint16_t sample);
 volatile void switchBuffer(void);
 void cycleEnded(void);
 uint16_t getbuffersFilled(void);

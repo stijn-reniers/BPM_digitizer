@@ -2,7 +2,7 @@
  * SerialCommunication_BPM.c
  *
  * Created: 24/02/2021 9:59:48
- *  Author: Gebruiker
+ *  Author: Reniers
  */ 
 
 #include <asf.h>
@@ -14,7 +14,8 @@
 #include "Algorithms.h"
 
 
-/* Size of the Pdc transfer buffer */
+
+/* Size of the Pdc transfer buffer (echoing the Matlab-host commands)*/
 #define BUFFER_SIZE  3						
 
 /* Pdc transfer buffer */
@@ -35,6 +36,7 @@ pdc_packet_t cycle_plot_packet;												// Pass here the address and size of 
 Pdc *g_p_uart_pdc;
 
 
+
 /* Configure UART module with desired settings*/
 
 static void configure_UART(void)
@@ -51,10 +53,9 @@ static void configure_UART(void)
 
 void send_cycle_plot()
 {	
-	
 	pdc_tx_init(g_p_uart_pdc, &cycle_plot_packet, NULL);
 	config[3] = 0;
-
+	
 }
 
 

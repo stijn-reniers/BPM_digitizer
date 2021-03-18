@@ -1,18 +1,7 @@
 #include "Algorithms.h"
 
 
-
 uint16_t half_cycle_length = (buffersize-1)>>1;
-
-/*
-uint16_t peaks_localization[6] = {0,0,0,0,0,0};
-uint16_t beam_intensity[2] = {0,0};
-double skewness[2] = {0,0};
-uint16_t fwhm[2] = {0,0};
-	
-*/
-
-
 double beam_parameters[13] = {0};
 
 /**************************************************************************************************
@@ -200,8 +189,8 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 		 
 		 double sample = (double) algorithm_buffer[i];
 		 double spread = (double)i-first_peak_mean;
-		 third_central += pow(spread,3)*sample;
-		 second_central += pow(spread,2)*sample;
+		 third_central += spread*spread*spread*sample;
+		 second_central += spread*spread*sample;
 		 
 	}
 	 
@@ -220,8 +209,8 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	 {
 		 double sample = (double) algorithm_buffer[i];
 		 double spread = (double)i-second_peak_mean;
-		 third_central += pow(spread,3)*sample;
-		 second_central += pow(spread,2)*sample;
+		 third_central += spread*spread*spread*sample;
+		 second_central += spread*spread*sample;
 	 }
 	 
 	  third_central = third_central/sum2;

@@ -10,13 +10,13 @@ end
 
 
 %% Create COM port object to communicate with SAM4E Xplained Pro
-s = serialport('COM5', 115200);     % assigns object s to serial port
+s = serialport('COM5', 1000000);     % assigns object s to serial port
 
 global beam_parameters;             % global parameter, since it is also used in the plotting routines
 global h;                           % global parameter to store beam parameter update text, deleted at every update
 
 beam_parameters = zeros(12,1);      % Preallocate parameter array
-plot_data = zeros(16668,1);
+
 
 sgtitle({' ','BPM-80 SIGNAL ANALYSIS SYSTEM', ' '}  , 'FontSize', 18);      % Title on application dashboard
 
@@ -95,15 +95,19 @@ function request_plot(~, ~, serialport)
     
     % Read the plot data from microcontroller
     
-    for i = 1:8334
-        plot_data(i) = read(serialport,1,'uint16');
-    end
+    tic;
+            plot_data = read(serialport,8334,'uint16');
+    toc; 
     
     % Plot the data as a single sweep
+    
+    
     
     subplot('Position',[0.05,0.5,0.35,0.35]);
     plot(plot_data);
     title('Oscilloscope display of signal sweep');
+    
+    
     
     
     % Compute and plot peak1 (X-crossection)
@@ -111,7 +115,7 @@ function request_plot(~, ~, serialport)
     peak_width_1 =  beam_parameters(3)- beam_parameters(2);
     peak1 = plot_data(beam_parameters(2): beam_parameters(3));
     subplot('Position',[0.5,0.35,0.15,0.2]);
-    plot(peak1);
+    bar(peak1);
     title('Profile of X-peak');
     
     % Compute and plot peak2 (Y-crossection)
@@ -119,7 +123,7 @@ function request_plot(~, ~, serialport)
     peak_width_2 = beam_parameters(6)- beam_parameters(5);
     peak2 = plot_data(beam_parameters(5): beam_parameters(6));
     subplot('Position',[0.75,0.35,0.15,0.2]);
-    plot(peak2);
+    bar(peak2);
     title('Profile of Y-peak');
     
     % Create surface plot 
@@ -132,7 +136,7 @@ function request_plot(~, ~, serialport)
         end
     end
     subplot('Position',[0.5,0.05,0.15,0.2]);
-    surf(X,Y,grid);
+    surf(X,Y,grid, 'edgecolor', 'none');
     title('Beam intensity surface plot');
 
     % Create contour plot 
@@ -148,9 +152,7 @@ function request_plot(~, ~, serialport)
     subplot('Position',[0.75,0.05,0.15,0.2]);
     contour(X,Y,grid);
     title('Beam intensity contour plot');
-    
-    compute_skewness(beam_parameters(2), beam_parameters(3), plot_data);
-    compute_skewness(beam_parameters(5), beam_parameters(6), plot_data);
+
 end
 
 % Request the beam parameter info from the microcontroller
@@ -174,23 +176,24 @@ function request_params(~, ~, serialport)
         echo(i) = read(serialport, 1, 'uint8');
     end
     
+    
     disp(['SAM4E echoed the command for requesting parameters :']);
     disp(echo);
     
     % Read the plot data from microcontroller
     
-    z = read(serialport,1,'double');
-    while z ~= 6666                                 % Delimiter of the beam parameter vector, added as redundancy for synchronization
-        z = read(serialport,1,'double');
-        disp(z);
-    end
+    
+   
+   
     
     % Read the beam parameter plot data
+   
+    z = read(serialport,1,'double')
+    tic;
     
-    for i = 1:12
-        beam_parameters(i) = read(serialport,1,'double');
-    end
+        beam_parameters = read(serialport,12,'double');
     
+    toc;
 
     % Create beam parameter window
     

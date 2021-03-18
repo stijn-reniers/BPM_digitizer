@@ -22,8 +22,6 @@
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
 
-#define fiducialInput IOPORT_CREATE_PIN(PORTA, 6)
-
 /** The DAC Channel value */
 #define DACC_CHANNEL_0 0
 
@@ -41,7 +39,6 @@
 /** Variables containing the AFEC samples for the Collector (0) and Fiducial(1) BPM-80 signal  */
 
 uint16_t collector_sample_data = 0;
-uint16_t fiducial_sample_data = 0;
 
 /** Trigger state of the fiducial */
 
@@ -49,11 +46,13 @@ bool triggered= false;
 
 /** Signal buffer full flag */
 
-bool fullBuffer=false;
+volatile bool fullBuffer=false;
 
 /** Indicate start of sampling */
 
 bool startedSampling= false;
+
+uint8_t triggerOffset;
 
 
 /** ------------------------------------------------------------------------------------ */
@@ -64,11 +63,12 @@ static void setDelayTimer(int delayFreq);
 
 
 /**
- * Interrupt handler for the ACC.
+ * Interrupt handler for the Analog Comparator Controller (triggered by fiducial).
  */
 void ACC_Handler(void)
 {
-	uint8_t triggerOffset = config[0];
+	triggerOffset = config[0];										// Obtain the trigger offset from configuration array
+	if (triggerOffset > 67) triggerOffset = 67;
 	uint32_t ul_status;
 	ul_status = acc_get_interrupt_status(ACC);
 	
@@ -78,17 +78,20 @@ void ACC_Handler(void)
 		if (acc_get_comparison_result(ACC)) {
 			
 			
+						
 			if(!triggered){
 				triggered= true;
 				fullBuffer=true;
 				if(triggerOffset==0){
-					tc_start(TC0,0);
-					cycleEnded();
+				tc_start(TC0,0);
+				cycleEnded();
+						
 				}else{
-					setDelayTimer(1000/triggerOffset);
+					setDelayTimer(1000/triggerOffset);						// set the timer frequency base on delay time
 					tc_start(TC0,1);
 					ioport_set_pin_level(delayPin,LED0_ACTIVE_LEVEL);
 				}
+		
 				
 			}				
 		} else {
@@ -96,7 +99,12 @@ void ACC_Handler(void)
 				triggered=false;
 		}
 	}
+	
 }
+
+/**
+ * Interrupt handler for the Trigger offset timer.
+ */
 
 void TC1_Handler(void){
 	
@@ -111,19 +119,17 @@ void TC1_Handler(void){
 }
 
 
-/* brief AFEC0 (collector input) interrupt callback function. */
+/* AFEC0 interrupt callback function. */
 
 static void collector_data_ready(void)
 {
 	collector_sample_data = afec_get_latest_value(AFEC0);										// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
 	addSampleCollector(collector_sample_data);													// Add the sample to the collector signal buffer
-	afec_start_software_conversion(AFEC1);
 }
 
 
 
-
-/* Configure to trigger interrupt-driven AFEC by TIOA output of timer at the desired sample rate.*/
+/* Configure trigger interrupt-driven AFEC by TIOA output of timer at the desired sample rate.*/
 
 static void configure_tc_trigger(void)
 {
@@ -170,7 +176,7 @@ static void setDelayTimer(int delayFreq){
 	
 }
 
-/* Configure the AFEC module (afec0, channel 6 and afec1, channel 0) for ADC conversion */
+/* Configure the AFEC module (AFEC0, channel 6) for ADC conversion */
 
 static void configure_afec(void)
 {
@@ -197,6 +203,7 @@ static void configure_afec(void)
 	
 		
 }
+
 
 /* Configure the DAC module for comparator trigger level */
 
@@ -233,13 +240,11 @@ int main (void)
 	/* Main event loop */
 	
 	while (1) {
-		if(getbuffersFilled()==100){
-			
-		}
 		
 		if(fullBuffer){
 			
 			fullBuffer=false;
+			
 			if (config[2]!= 0) send_beam_parameters();
 			if (config[3]!= 0) send_cycle_plot();
 		}

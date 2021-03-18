@@ -20,13 +20,10 @@ bool printed=false;
 uint16_t buffer0[buffersize]={ 0 };
 uint16_t buffer1[buffersize]={ 0 };
 uint16_t buffer2[buffersize]={ 0 };
-uint16_t buffer3[buffersize]={ 0 };
-
 
 uint16_t* afec_buffer_collector = buffer0;
-uint16_t* afec_buffer_fiducial = buffer1;
-uint16_t* algorithm_buffer = buffer2;
-uint16_t* transmit_buffer = buffer3;
+uint16_t* algorithm_buffer = buffer1;
+uint16_t* transmit_buffer = buffer2;
 
 
 
@@ -41,16 +38,6 @@ void addSampleCollector(uint16_t sample){
 	
 }
 
-void addSampleFiducial(uint16_t sample)
-{
-	
-	if (bufferIndexFiducial<buffersize)
-	{
-		afec_buffer_fiducial[bufferIndexFiducial]= sample;
-		bufferIndexFiducial++;
-	}
-	
-}
 
 void swap(uint16_t** x, uint16_t** y){
 	uint16_t* temp = *x;
