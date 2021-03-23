@@ -1,0 +1,3 @@
+﻿  senderApplication.cpp
+C:\Users\decos\source\BPM_software_application\imgui-master\examples\SenderSim\senderApplication.cpp(18,9): warning C4101: 'str': unreferenced local variable
+  SenderSim.vcxproj -> C:\Users\decos\source\BPM_software_application\imgui-master\examples\x64\Debug\SenderSim.exe

@@ -1,0 +1,13 @@
+﻿  BPM_Reader.cpp
+C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\example_glfw_opengl3\BPM_Reader.cpp(10,15): warning C4309: 'initializing': truncation of constant value
+C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\example_glfw_opengl3\BPM_Reader.cpp(51,9): warning C4189: 'i': local variable is initialized but not referenced
+  main.cpp
+C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\example_glfw_opengl3\main.cpp(213,46): warning C4244: '=': conversion from 'float' to 'uint16_t', possible loss of data
+C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\example_glfw_opengl3\main.cpp(218,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\example_glfw_opengl3\main.cpp(143,10): warning C4189: 'show_another_window': local variable is initialized but not referenced
+  Generating code
+  1 of 2004 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    69 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  example_glfw_opengl3.vcxproj -> C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\example_glfw_opengl3\Release\BPMGUI.exe

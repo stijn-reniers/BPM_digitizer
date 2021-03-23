@@ -1,0 +1,9 @@
+﻿  rs232.c
+  senderApplication.cpp
+C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\SenderSim\senderApplication.cpp(18,9): warning C4101: 'str': unreferenced local variable
+  Generating code
+  5 of 6 functions (83.3%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  SenderSim.vcxproj -> C:\Users\decos\source\repos\BPM_software_application\imgui-master\examples\x64\Release\SenderSim.exe

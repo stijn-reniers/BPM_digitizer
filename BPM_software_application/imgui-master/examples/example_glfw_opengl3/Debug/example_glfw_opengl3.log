@@ -1,0 +1,4 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(467,5): warning MSB8028: The intermediate directory (C:\Users\decos\source\BPM_software_application\imgui-master\examples\example_glfw_opengl3\Debug\) contains files shared from another project (example_glfw_opengl3.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  main.cpp
+C:\Users\decos\source\BPM_software_application\imgui-master\examples\example_glfw_opengl3\main.cpp(132,9): warning C4101: 'i': unreferenced local variable
+  example_glfw_opengl3.vcxproj -> C:\Users\decos\source\BPM_software_application\imgui-master\examples\example_glfw_opengl3\Debug\BPMGUI.exe
