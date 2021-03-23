@@ -10,7 +10,7 @@ end
 
 
 %% Create COM port object to communicate with SAM4E Xplained Pro
-s = serialport('COM5', 1000000);     % assigns object s to serial port
+s = serialport('COM5', 115200);     % assigns object s to serial port
 
 global beam_parameters;             % global parameter, since it is also used in the plotting routines
 global h;                           % global parameter to store beam parameter update text, deleted at every update
@@ -180,11 +180,7 @@ function request_params(~, ~, serialport)
     disp(['SAM4E echoed the command for requesting parameters :']);
     disp(echo);
     
-    % Read the plot data from microcontroller
     
-    
-   
-   
     
     % Read the beam parameter plot data
    
@@ -226,6 +222,8 @@ function request_params(~, ~, serialport)
     % Position and display the updated text
     
     ax = subplot('Position',[0.05,0.1,0.35,0.35]);
+    %ax = uipanel('Title','Beam parameters','FontSize',12,'Position',[0.05,0.1,0.35,0.35]);
+    %h = uicontrol('Style','text','String',beam_str,'Parent',ax, 'Position',[50 50 100 500]);
     h = text(0,0.4,beam_str, 'FontSize', 10);
     set ( ax, 'visible', 'off')
    

@@ -154,9 +154,9 @@ src/main.d src/main.o: ../src/main.c \
  ../src/ASF/common/services/serial/sam_uart/uart_serial.h \
  ../src/ASF/sam/drivers/uart/uart.h ../src/ASF/sam/drivers/usart/usart.h \
  ../src/config/conf_uart_serial.h ../src/ASF/sam/drivers/tc/tc.h \
- ../src/config/conf_board.h ../src/buffer.h ../src/Algorithms.h \
+ ../src/config/conf_board.h ../src/buffer.h ../src/algorithms.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\math.h \
- ../src/SerialCommunication_BPM.h
+ ../src/serialCommunication_BPM.h
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\stdio.h:
 
@@ -488,8 +488,8 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 
 ../src/buffer.h:
 
-../src/Algorithms.h:
+../src/algorithms.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\math.h:
 
-../src/SerialCommunication_BPM.h:
+../src/serialCommunication_BPM.h:

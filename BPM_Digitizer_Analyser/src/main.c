@@ -1,8 +1,10 @@
-/* 
+/*****************************************************************
+
    Authors : Decoster Bram, Reniers Stijn
    Master's thesis project Group T, IMEC
-   BPM-80 Digitization module 
-*/
+   BPM-80 Embedded digitization module 
+   
+******************************************************************/
 
 #include <stdio.h>
 #include <string.h>
@@ -13,9 +15,15 @@
 #include "conf_board.h"
 #include "conf_clock.h"
 #include "stdio_serial.h"
+
 #include "buffer.h"
-#include "Algorithms.h"
-#include "SerialCommunication_BPM.h"
+#include "algorithms.h"
+#include "serialCommunication_BPM.h"
+
+
+/** ------------------------------------------------------------------------------------ */
+/**								MACRO DEFINITIONS										 */
+/** ------------------------------------------------------------------------------------ */
 
 #define delayPin LED0_GPIO
 
@@ -30,29 +38,27 @@
 							| DACC_ACR_IBCTLCH1(0x02) \
 							| DACC_ACR_IBCTLDACCORE(0x01))
 							
-							
-							
+								
 /** ------------------------------------------------------------------------------------ */
 /**								GLOBAL VARIABLES										 */
 /** ------------------------------------------------------------------------------------ */
 
-/** Variables containing the AFEC samples for the Collector (0) and Fiducial(1) BPM-80 signal  */
+/** Variable containing the AFEC (ADC) sample values for the BPM-80 collector signal  */
 
 uint16_t collector_sample_data = 0;
 
-/** Trigger state of the fiducial */
+/* Trigger state of the fiducial */
 
 bool triggered= false;
 
-/** Signal buffer full flag */
+/* Signal buffer full flag : set at every fiducial pulse, reset in main loop */
+/* Volatile keyword is important as it avoids compiler optimization of (basically ignoring) if()-statement in main loop */
 
 volatile bool fullBuffer=false;
 
-/** Indicate start of sampling */
+/** Variable containing configurable trigger delay in ms (always between 0 and 67, so max 1 fiducial cycle)  */
 
-bool startedSampling= false;
-
-uint8_t triggerOffset;
+uint8_t triggerOffset = 0;
 
 
 /** ------------------------------------------------------------------------------------ */
@@ -63,56 +69,69 @@ static void setDelayTimer(int delayFreq);
 
 
 /**
- * Interrupt handler for the Analog Comparator Controller (triggered by fiducial).
+  Interrupt handler for the Analog Comparator Controller (triggered by fiducial pulse).
+  
  */
+
 void ACC_Handler(void)
 {
-	triggerOffset = config[0];										// Obtain the trigger offset from configuration array
-	if (triggerOffset > 67) triggerOffset = 67;
+	triggerOffset = config[0];												// Obtain the trigger offset from configuration array
+	if (triggerOffset > 67) triggerOffset = 67;								// Set trigger offset to 67 if larger (upper limit of one cycle)
+	
 	uint32_t ul_status;
-	ul_status = acc_get_interrupt_status(ACC);
+	ul_status = acc_get_interrupt_status(ACC);								
+	
 	
 	/* Compare Output Interrupt */
 	
-	if ((ul_status & ACC_ISR_CE) == ACC_ISR_CE) {
-		if (acc_get_comparison_result(ACC)) {
-			
-			
-						
-			if(!triggered){
-				triggered= true;
-				fullBuffer=true;
-				if(triggerOffset==0){
-				tc_start(TC0,0);
-				cycleEnded();
-						
-				}else{
-					setDelayTimer(1000/triggerOffset);						// set the timer frequency base on delay time
-					tc_start(TC0,1);
-					ioport_set_pin_level(delayPin,LED0_ACTIVE_LEVEL);
-				}
-		
+	if ((ul_status & ACC_ISR_CE) == ACC_ISR_CE) 
+	{
+		if (acc_get_comparison_result(ACC))									// check if Vin+ > Vin-
+		{
+			if(!triggered)
+			{
+				triggered= true;											
+				fullBuffer=true;											
 				
+				if(triggerOffset == 0)
+				{
+					tc_start(TC0,0);
+					cycleEnded();											// performs the buffer pointer switch 
+				}
+				
+				else														
+				{
+					setDelayTimer(1000/triggerOffset);						// set the delay timer frequency based on trigger delay time
+					tc_start(TC0,1);
+					ioport_set_pin_level(delayPin,LED0_ACTIVE_LEVEL);		// Indicates delay timer is working (debug purposes)
+				}
 			}				
-		} else {
-				if(triggered)
-				triggered=false;
+		} 
+		
+		else 
+		{
+			if(triggered)
+			triggered=false;
 		}
 	}
 	
 }
 
 /**
- * Interrupt handler for the Trigger offset timer.
+ * Interrupt handler for the Trigger offset timer (only invoked if trigger delay > 0).
+   Timer is stopped immediately after first interrupt, as one period equals the configured delay time (trigger offset).
  */
 
 void TC1_Handler(void){
 	
 	ioport_set_pin_level(delayPin,LED0_INACTIVE_LEVEL);
+	
 	NVIC_DisableIRQ(TC1_IRQn);
 	NVIC_ClearPendingIRQ(TC1_IRQn);
 	tc_disable_interrupt(TC0, 1, TC_IER_CPCS);
 	tc_stop(TC0,1);
+	
+	
 	cycleEnded();
 	tc_start(TC0,0);
 	
@@ -135,11 +154,9 @@ static void configure_tc_trigger(void)
 {
     uint32_t ul_div = 0;
 	uint32_t ul_tc_clks = 0;
-	uint32_t ul_sysclk = sysclk_get_cpu_hz();											// returns (possibly prescaled) clock frequency
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();											
 	
-	uint32_t ul_div2=0;
-	uint32_t ul_tc_clks2=0;
-	int sampleFreq= 250000;
+	int sampleFreq= 125000;
 	
 	pmc_enable_periph_clk(ID_TC0);														// Enable peripheral clock of timer counter 0
 	pmc_enable_periph_clk(ID_TC1);
@@ -160,7 +177,7 @@ static void configure_tc_trigger(void)
 
 static void setDelayTimer(int delayFreq){
 	
-	uint32_t ul_sysclk = sysclk_get_cpu_hz();											// returns (possibly prescaled) clock frequency
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();											
 	uint32_t ul_div=0;
 	uint32_t ul_tc_clks=0;
 	uint32_t counts=0;
@@ -176,7 +193,7 @@ static void setDelayTimer(int delayFreq){
 	
 }
 
-/* Configure the AFEC module (AFEC0, channel 6) for ADC conversion */
+/* Configure the AFEC module (AFEC0, channel 6) for ADC conversion of the collector signal */
 
 static void configure_afec(void)
 {
@@ -205,7 +222,7 @@ static void configure_afec(void)
 }
 
 
-/* Configure the DAC module for comparator trigger level */
+/* Configure the DAC controller module for comparator trigger level */
 
 static void configureDACC(void){
 	pmc_enable_periph_clk(ID_DACC);
@@ -232,21 +249,26 @@ int main (void)
 	configureDACC();
 	ioport_set_pin_dir(delayPin,IOPORT_DIR_OUTPUT);
 	pmc_enable_periph_clk(ID_ACC);
-	acc_init(ACC, ACC_MR_SELPLUS_AD7, ACC_MR_SELMINUS_DAC0,			// set pin AFEC1 AD1 (EXT1 pin 4) as + comparator and DAC0 as -
+	acc_init(ACC, ACC_MR_SELPLUS_AD7, ACC_MR_SELMINUS_DAC0,			// set pin AFEC1 AD1 (EXT1 pin 4) as + comparator and DAC channel 0 as -
 	ACC_MR_EDGETYP_ANY, ACC_MR_INV_DIS);
 	NVIC_EnableIRQ(ACC_IRQn);
 	acc_enable_interrupt(ACC);	
 	
-	/* Main event loop */
+	/* Main event loop, polling for asynchronous data requests from Matlab application*/
 	
-	while (1) {
+	while (1) 
+	{
 		
-		if(fullBuffer){
-			
+		if(fullBuffer)												// flag that indicates a cycle has ended
+		{
 			fullBuffer=false;
 			
+			/* Compute the parameters corresponding to this cycle*/
+			compute_beam_parameters();
+			
+			/* Check if data has to be send */
 			if (config[2]!= 0) send_beam_parameters();
-			if (config[3]!= 0) send_cycle_plot();
+			else if (config[3]!= 0) send_cycle_plot();
 		}
 		
 	}

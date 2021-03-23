@@ -1,4 +1,4 @@
-#include "Algorithms.h"
+#include "algorithms.h"
 
 
 uint16_t half_cycle_length = (buffersize-1)>>1;
@@ -9,7 +9,7 @@ double beam_parameters[13] = {0};
  **************************************************************************************************/
 
 
-/*	Compute population average/mean of the distribution */
+/*	Compute population average/mean of the distribution (collector peak), which is a sample index*/
 
 double sample_average(uint16_t start, uint16_t end) 
 {
@@ -27,7 +27,7 @@ double sample_average(uint16_t start, uint16_t end)
 }
 
 
-/* Find the maximum of the BPM-80 data half cycle and return its index*/
+/* Find the maximum of the BPM-80 data half cycle and return its index */
 
 uint16_t find_max(uint16_t* halfcycle, uint16_t length)
 {
@@ -58,7 +58,7 @@ uint16_t sum(uint16_t start, uint16_t end)
 	return result;
 }
 
-/* Find beam peak locations and peak widths X and Y using either the threshold or dispersion-based algorithm */
+/* Find beam peak locations and peak widths for X and Y using either the threshold or dispersion-based algorithm */
 /* Returns an array of 6 elements : 1. peak position X  2. peak edge left X  3. peak edge right X 
 									4. peak position Y  5. peak edge left Y  6. peak edge right Y */
 
@@ -122,7 +122,7 @@ void detect_peaks(uint16_t threshold)
 
 /* Compute beam intensity of a cycle in X and Y cross section */
 /* Takes as input the borders of both peaks*/
-/* Outputs beam intensity of X and Y cross-section, so that higher level data representation can choose whether to multiply or sum them*/
+/* Outputs beam intensity of X and Y cross-section, so that higher level data representation can choose how to combine the values*/
 
 void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right)
 {
@@ -142,7 +142,7 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 }
 
  
- /* Compute FWHM X and Y */
+ /* Compute FWHM X and Y (based on variance in this case, assumes more or less gaussian profile */
 
  void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right)
  {
@@ -224,12 +224,12 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 }
 
 
-/* Present beam parameters on terminal*/
+/* Compute the parameters (to be called at the end of each cycle) and put a delimiter in front that is certain to be different than parameter values*/
 
 void compute_beam_parameters()
 {
 		
-	detect_peaks(20);
+	detect_peaks(20);	// threshold of 20 (16 mv), might be made user-configurable later
  	compute_beam_intensity(beam_parameters[2], beam_parameters[3], beam_parameters[5], beam_parameters[6]);
  	compute_fwhm(beam_parameters[2], beam_parameters[3], beam_parameters[5], beam_parameters[6]);
  	compute_skewness(beam_parameters[2], beam_parameters[3], beam_parameters[5], beam_parameters[6]);
@@ -238,29 +238,4 @@ void compute_beam_parameters()
 	
 	
 }
-
-
-/* Allows to convert integer sample value to float */
-
-static void print_float(float voltage)
-{
-	uint8_t i;
-	int32_t j;
-	float f;
-
-	f = 100.00 * voltage;
-
-	j = (int32_t)f;
-
-	if (voltage > 0) {
-		i = j - (int32_t)voltage * 100;
-		} else {
-		i = (int32_t)voltage * 100 - j;
-	}
-
-	j = j / 100;
-
-	printf("%d.%d\n\r", (int32_t)j, (int32_t)i);
-}
-
 

@@ -1,10 +1,9 @@
-#include <math.h>
-
-#define buffersize 8334
-#include "buffer.h"
-
 #ifndef ALGORITHMS_H_
 #define ALGORITHMS_H_
+
+#include <math.h>
+#define buffersize 8334
+#include "buffer.h"
 
 double beam_parameters[13];
 
