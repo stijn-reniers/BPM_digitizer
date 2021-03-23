@@ -1,7 +1,7 @@
 src/ASF/thirdparty/wireless/addons/sio2host/uart/sio2host.d \
  src/ASF/thirdparty/wireless/addons/sio2host/uart/sio2host.o: \
  ../src/ASF/thirdparty/wireless/addons/sio2host/uart/sio2host.c \
- ../src/asf.h ../src/ASF/sam/drivers/afec/afec.h \
+ ../src/asf.h ../src/ASF/sam/drivers/acc/acc.h \
  ../src/ASF/sam/utils/compiler.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\lib\gcc\arm-none-eabi\6.3.1\include\stddef.h \
  ../src/ASF/common/utils/parts.h \
@@ -126,7 +126,8 @@ src/ASF/thirdparty/wireless/addons/sio2host/uart/sio2host.d \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\alloca.h \
  ../src/ASF/common/utils/interrupt.h \
  ../src/ASF/common/utils/interrupt/interrupt_sam_nvic.h \
- ../src/ASF/sam/utils/status_codes.h \
+ ../src/ASF/sam/drivers/afec/afec.h ../src/ASF/sam/utils/status_codes.h \
+ ../src/ASF/sam/drivers/dacc/dacc.h \
  ../src/ASF/common/services/delay/delay.h \
  ../src/ASF/common/services/clock/sysclk.h ../src/config/conf_clock.h \
  ../src/ASF/common/services/clock/sam4e/sysclk.h \
@@ -140,7 +141,8 @@ src/ASF/thirdparty/wireless/addons/sio2host/uart/sio2host.d \
  ../src/ASF/common/services/delay/sam/cycle_counter.h \
  ../src/ASF/common/services/ioport/ioport.h \
  ../src/ASF/common/services/ioport/sam/ioport_pio.h \
- ../src/ASF/sam/drivers/pmc/sleep.h ../src/ASF/sam/utils/fpu/fpu.h \
+ ../src/ASF/sam/drivers/pdc/pdc.h ../src/ASF/sam/drivers/pmc/sleep.h \
+ ../src/ASF/sam/utils/fpu/fpu.h \
  ../src/ASF/sam/boards/sam4e_xplained_pro/led.h \
  ../src/ASF/common/services/sleepmgr/sam/sleepmgr.h \
  ../src/config/conf_sleepmgr.h \
@@ -156,7 +158,7 @@ src/ASF/thirdparty/wireless/addons/sio2host/uart/sio2host.d \
 
 ../src/asf.h:
 
-../src/ASF/sam/drivers/afec/afec.h:
+../src/ASF/sam/drivers/acc/acc.h:
 
 ../src/ASF/sam/utils/compiler.h:
 
@@ -406,7 +408,11 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 
 ../src/ASF/common/utils/interrupt/interrupt_sam_nvic.h:
 
+../src/ASF/sam/drivers/afec/afec.h:
+
 ../src/ASF/sam/utils/status_codes.h:
+
+../src/ASF/sam/drivers/dacc/dacc.h:
 
 ../src/ASF/common/services/delay/delay.h:
 
@@ -437,6 +443,8 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 ../src/ASF/common/services/ioport/ioport.h:
 
 ../src/ASF/common/services/ioport/sam/ioport_pio.h:
+
+../src/ASF/sam/drivers/pdc/pdc.h:
 
 ../src/ASF/sam/drivers/pmc/sleep.h:
 

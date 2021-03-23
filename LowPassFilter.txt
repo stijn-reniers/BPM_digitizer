@@ -1,3 +1,0 @@
-output port RA2 needs to be connected to a filter with 
-C= 10nF
-R= 1kOhm
