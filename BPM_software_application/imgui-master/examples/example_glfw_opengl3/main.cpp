@@ -3,7 +3,6 @@
 // If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
 // Read online: https://github.com/ocornut/imgui/tree/master/docs
 
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -12,7 +11,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <chrono>
 #include <thread>
+#include "BPM_Reader.h"
+#define plotSize 8334
+
 // About Desktop OpenGL function loaders:
 //  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
 //  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
@@ -49,66 +52,21 @@ using namespace gl;
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-bool running = true;
-double parameter[12] = { 0 };
-int i, n = 0, reading = 0,
-cport_nr = 3,
-bdrate = 115200;
-unsigned char buf[255];
-uint16_t data;
-double syncData;
+
+
+int bdrate = 115200;
+uint16_t data, plotMax;
 char mode[] = { '8','N','1',0 };
+float plotF[plotSize];
+int triggerLevel = 0;
+int triggerDelay = 0;
+uint16_t* plot;
+char titleParameters[6][40] = { "Peak left edge" , "Peak centre" , "Peak right edge", "Beam intensity","Beam FWHM","Beam skewness" };
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-
-void updateParameters(uint8_t amount, uint8_t startingIndex) {
-    uint8_t reading = 0;
-    while (reading < amount) {
-        n = RS232_PollComport(cport_nr, buf, 8);
-        if (n > 0) {
-            parameter[startingIndex + reading] = ((double*)buf)[0];
-            reading++;
-        }
-    }
-}
-
-int recieveData() {
-    n = RS232_PollComport(cport_nr, (unsigned char*)&syncData, 8);
-    //std::cout << n << ":" << syncData << std::endl;
-    if (n > 0) {
-        if (syncData== 6666) {
-            updateParameters(6, 0);
-            n = RS232_PollComport(cport_nr, (unsigned char*)&syncData, 8);
-            if (syncData == 7777) {
-                updateParameters(6, 6);
-                
-            }
-            return 1;
-        }
-        RS232_flushRXTX(3);
-       
-    }
-    else {
-        return 0;
-    }
-}
-
-void requestData() {
-    while (running) {
-        
-        RS232_SendByte(cport_nr, 255);
-        RS232_SendByte(cport_nr, 2);
-        RS232_SendByte(cport_nr, 255);
-        Sleep(50);
-        if (recieveData() == 1) {
-            std::cout << "succes" << std::endl;
-        }
-        Sleep(1000);
-    }
-}
 
 int main(int, char**)
 {
@@ -135,7 +93,7 @@ int main(int, char**)
 #endif
 
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "BPM Monitor", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1960, 1080, "BPM Monitor", NULL, NULL);
     if (window == NULL)
         return 1;
     glfwMakeContextCurrent(window);
@@ -184,10 +142,9 @@ int main(int, char**)
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    char titleParameters[6][40] = { "Peak left edge" , "Peak centre" , "Peak right edge", "Beam intensity","Beam FWHM","Beam skewness" };
-    srand(time(NULL));
-    
+   
 
+    // Open COM connection and start thread
     if (RS232_OpenComport(cport_nr, bdrate, mode, 0))
     {
         printf("Can not open comport\n");
@@ -195,13 +152,11 @@ int main(int, char**)
         return(0);
     }
     RS232_flushRXTX(3);
-
     std::thread thread_obj(requestData);
+
     // Main loop
     while (!glfwWindowShouldClose(window))
-    {
-        //recieveData();
-        
+    {        
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -222,7 +177,7 @@ int main(int, char**)
         {
             static float f = 0.0f;
             static int counter = 0;
-            ImVec2 size{ 1000,500 };
+            ImVec2 size{ 1960,1080 };
             static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
             ImGui::Begin("BPM monitor");                          // Create a window called "Hello, world!" and append into it.
             ImGui::SetWindowSize(size);
@@ -233,6 +188,7 @@ int main(int, char**)
                 ImGui::TableHeader("X crossection");
                 ImGui::TableNextColumn();
                 ImGui::TableHeader("Y crossection");
+                double* parameter = getParameters();
                 for (int row = 0; row < 6; row++)
                 {                   
                     ImGui::TableNextRow();
@@ -246,33 +202,48 @@ int main(int, char**)
                 
                 ImGui::EndTable();
             }
-                           // Display some text (you can use a format strings too)
-            if (ImGui::Button("Button")) {           // Buttons return true when clicked (most widgets return true when edited/activated)
-                //requestData();
-                counter++;
-            }
-            ImGui::Text("counter = %d", counter);
-            ImGui::SameLine();
-
+           
             {
-                float lines[8334];
-                for (int n = 0; n < 8334; n++)
-                    lines[n] = rand()%100;
-                ImGui::PlotLines("Lines", lines, 8334,0,0,-2,100, ImVec2(0, 80.0f));
+                if (getNewPlotData()) {
+                    plotMax = 0;
+                    plot = getPlot();
+                    for (int i = 0;i < plotSize; i++) {
+                        plotF[i] = plot[i];
+                        if (plotF[i] > plotMax) {
+                            plotMax = plotF[i];
+                        }
+                    }
+                    setNewPlotData(false); 
+                }
+                ImGui::PlotLines("Lines", plotF, 8334,0,0,0,plotMax+100, ImVec2(1800, 600));
+            }
+            ImGui::InputInt("Trigger level", &triggerLevel);
+            ImGui::SameLine();
+            if (ImGui::Button("Update level")) {
+                if (triggerLevel > 255) {
+                    triggerLevel = 255;
+                }
+                if (triggerLevel < 0) {
+                    triggerLevel = 0;
+                }
+                updateTriggerLevel(triggerLevel);
+            }
+            ImGui::InputInt("Trigger Delay",&triggerDelay);
+            ImGui::SameLine();
+            if (ImGui::Button("Update Delay")) {
+                if (triggerDelay>33) {
+                    triggerDelay = 33;
+                }
+                if (triggerDelay < 0) {
+                    triggerDelay = 0;
+                }
+                updateTriggerDelay(triggerDelay);
             }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
+        
 
         // Rendering
         ImGui::Render();
@@ -285,14 +256,13 @@ int main(int, char**)
 
         glfwSwapBuffers(window);
     }
-    running = false;
-    thread_obj.join();
     // Cleanup
-    //serial.closeDevice();
+    setRunning(false);
+    thread_obj.join();
+    RS232_CloseComport(3);
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    
     glfwDestroyWindow(window);
     glfwTerminate();
 

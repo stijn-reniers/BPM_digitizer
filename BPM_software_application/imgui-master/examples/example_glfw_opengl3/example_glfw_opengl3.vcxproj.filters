@@ -43,6 +43,9 @@
     <ClCompile Include="rs232.c">
       <Filter>sources</Filter>
     </ClCompile>
+    <ClCompile Include="BPM_Reader.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\imconfig.h">
@@ -67,6 +70,9 @@
       <Filter>sources</Filter>
     </ClInclude>
     <ClInclude Include="rs232.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="BPM_Reader.h">
       <Filter>sources</Filter>
     </ClInclude>
   </ItemGroup>

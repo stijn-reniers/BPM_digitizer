@@ -1548,8 +1548,8 @@ static inline void stdio_serial_init(volatile void *usart, const usart_serial_op
   400b38:	4b1e      	ldr	r3, [pc, #120]	; (400bb4 <pdc_uart_initialization+0xdc>)
   400b3a:	4a1f      	ldr	r2, [pc, #124]	; (400bb8 <pdc_uart_initialization+0xe0>)
   400b3c:	601a      	str	r2, [r3, #0]
-	beam_parameters_packet.ul_size = 104;
-  400b3e:	2268      	movs	r2, #104	; 0x68
+	beam_parameters_packet.ul_size = 112;
+  400b3e:	2270      	movs	r2, #112	; 0x70
   400b40:	605a      	str	r2, [r3, #4]
 	
 	cycle_plot_packet.ul_addr = (uint32_t) transmit_buffer;		// start address of transfer packet data is the buffer we defined ourselves

@@ -100,7 +100,7 @@ void pdc_uart_initialization(void)
 	g_pdc_uart_packet.ul_size = BUFFER_SIZE;					// size of the buffer/packet
 	
 	beam_parameters_packet.ul_addr = (uint32_t) beam_parameters;		// start address of transfer packet data is the buffer we defined ourselves
-	beam_parameters_packet.ul_size = 104;
+	beam_parameters_packet.ul_size = 112;
 	
 	cycle_plot_packet.ul_addr = (uint32_t) transmit_buffer;		// start address of transfer packet data is the buffer we defined ourselves
 	cycle_plot_packet.ul_size = 16668;

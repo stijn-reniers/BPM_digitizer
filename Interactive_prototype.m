@@ -15,7 +15,7 @@ s = serialport('COM4', 115200);     % assigns object s to serial port
 global beam_parameters;             % global parameter, since it is also used in the plotting routines
 global h;                           % global parameter to store beam parameter update text, deleted at every update
 
-beam_parameters = zeros(12,1);      % Preallocate parameter array
+beam_parameters = zeros(13,1);      % Preallocate parameter array
 plot_data = zeros(16668,1);
 
 sgtitle({' ','BPM-80 SIGNAL ANALYSIS SYSTEM', ' '}  , 'FontSize', 18);      % Title on application dashboard
@@ -87,7 +87,7 @@ function request_plot(~, ~, serialport)
     
     echo = zeros(3,1);
     for i = 1:3
-        echo(i) = read(serialport, 1, 'uint8');
+        %echo(i) = read(serialport, 1, 'uint8');
     end
     
     disp(['SAM4E echoed the command for requesting plot :']);
@@ -170,9 +170,9 @@ function request_params(~, ~, serialport)
     % correctly received
     
     echo = zeros(3,1);
-    for i = 1:3
-        echo(i) = read(serialport, 1, 'uint8');
-    end
+    %for i = 1:3
+    %    echo(i) = read(serialport, 1, 'uint8');
+    %end
     
     disp(['SAM4E echoed the command for requesting parameters :']);
     disp(echo);
@@ -187,7 +187,7 @@ function request_params(~, ~, serialport)
     
     % Read the beam parameter plot data
     
-    for i = 1:12
+    for i = 1:13
         beam_parameters(i) = read(serialport,1,'double');
     end
     
@@ -217,7 +217,7 @@ function request_params(~, ~, serialport)
         [],...
         ['Beam FWHM        :                           '  num2str(beam_parameters(9)) '                                ' num2str(beam_parameters(10))], ...
         [],...
-        ['Beam skewness        :                  '  num2str(beam_parameters(11)) '                      ' num2str(beam_parameters(12))]};
+        ['Beam skewness        :                  '  num2str(beam_parameters(12)) '                      ' num2str(beam_parameters(13))]};
     
     
     % Position and display the updated text
