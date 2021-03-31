@@ -11,7 +11,7 @@
 
 /* Size of the Pdc transmit buffer (echoing the Matlab-host commands, omitted in case of C++ ImGUI host) in BYTES*/
 #define BUFFER_SIZE_HOST_COMMAND  3	
-#define BUFFER_SIZE_PARAMETERS	  104
+#define BUFFER_SIZE_PARAMETERS	  112
 #define BUFFER_SIZE_PLOTDATA	  16668					
 
 /* Pdc transfer buffer */
@@ -59,6 +59,8 @@ void send_cycle_plot()
 
 void send_beam_parameters()
 {
+	beam_parameters[0] = 6666;
+	beam_parameters[7] = 7777;
 	pdc_tx_init(g_p_uart_pdc, &beam_parameters_packet, NULL);
 	config[2] = 0;																		// reset parameter data flag in configuration array
 }
@@ -78,7 +80,7 @@ void console_uart_irq_handler(void)
 		uint8_t command_index = 0;
 		if(host_command[0] == 255)											// check front delimiter of the host packet
 		{
-			command_index= host_command[1];								// second element of host command contains index in configuration array (indicates which setting to change)
+			command_index= host_command[1];											// second element of host command contains index in configuration array (indicates which setting to change)
 			config[command_index] = host_command[2];								// third element is the new value of the specified setting
 		}
 		

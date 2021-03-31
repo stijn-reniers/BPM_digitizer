@@ -185,11 +185,10 @@ function request_params(~, ~, serialport)
     % Read the beam parameter plot data
    
     z = read(serialport,1,'double')
-    tic;
+    beam_parameters(1:6) = read(serialport,6,'double');
+    z = read(serialport,1,'double')
+    beam_parameters(7:12) = read(serialport,6,'double');
     
-        beam_parameters = read(serialport,12,'double');
-    
-    toc;
 
     % Create beam parameter window
     
