@@ -2,7 +2,15 @@
 
 
 uint16_t half_cycle_length = (buffersize-1)>>1;
-double beam_parameters[13] = {0};
+double beam_parameters[14] = {0};
+
+
+	
+//Byte beam_parameters[30] = {0};
+	
+uint16_t nr_of_cycles = 0;
+
+
 
 /**************************************************************************************************
  ***************************** BEAM PARAMETER ALGORITHM IMPLEMENTATIONS ***************************
@@ -13,7 +21,6 @@ double beam_parameters[13] = {0};
 
 double sample_average(uint16_t start, uint16_t end) 
 {
-		
 	uint32_t sample_avg = 0;
 	uint32_t total_frequency = 0;
 	
@@ -126,18 +133,24 @@ void detect_peaks(uint16_t threshold)
 
 void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right)
 {
-	beam_parameters[7] = 0;
 	beam_parameters[8] = 0;
+	beam_parameters[9] = 0;
 	
 	for (uint16_t i = peak1_left; i < peak1_right ; i++)
 	{
-		beam_parameters[7] += (uint32_t)algorithm_buffer[i];
+		beam_parameters[8] += (uint32_t)algorithm_buffer[i];
 	}
 	
 	for (uint16_t i = peak2_left; i < peak2_right ; i++)
 	{
-		beam_parameters[8] += (uint32_t)algorithm_buffer[i];
+		beam_parameters[9] += (uint32_t)algorithm_buffer[i];
 	}
+	
+	/* Conversion from peak integrals into beam intensity
+		
+		arithmetic_avg = (beam_parameters[7] + beam_parameters[8]) / 2;
+		=> on pc : beam_current = arithmetic_avg / conversion_factor;
+	*/
 	
 }
 
@@ -160,7 +173,7 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 	 }
 	 variance=summed/sum(peak1_left,peak1_right);
 	
-	 beam_parameters[9]= (uint16_t)(sqrt(variance)*2.355);
+	 beam_parameters[10]= (uint16_t)(sqrt(variance)*2.355);
 	 summed=0;
 	 variance=0;
 	 for (uint16_t i=peak2_left;i<peak2_right;i++ )
@@ -168,7 +181,7 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 		 summed+= (pow((i-mean[1]),2)*algorithm_buffer[i]);
 	 }
 	 variance=summed/sum(peak2_left,peak2_right);
-	 beam_parameters[10]=(uint16_t) (sqrt(variance)*2.355);
+	 beam_parameters[11]=(uint16_t) (sqrt(variance)*2.355);
  }
 
 
@@ -197,10 +210,10 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	 third_central = third_central/sum1;
 	 second_central = second_central/sum1;
 	 
-	 double denominator = pow(second_central,1.5);
+	 double denominator = sqrt(second_central*second_central*second_central);
 	 third_central = third_central/denominator;
 	
-	beam_parameters[11] = third_central;
+	beam_parameters[12] = third_central;
 	
 	third_central = 0;
 	second_central = 0;
@@ -216,25 +229,36 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	  third_central = third_central/sum2;
 	  second_central = second_central/sum2;
 	  
-	  denominator = pow(second_central,1.5);
+	  denominator = sqrt(second_central*second_central*second_central);
 	  third_central = third_central/denominator;
 	
-	beam_parameters[12] = third_central;
+	beam_parameters[13] = third_central;
 	
 }
+
+
 
 
 /* Compute the parameters (to be called at the end of each cycle) and put a delimiter in front that is certain to be different than parameter values*/
 
 void compute_beam_parameters()
 {
+	if (nr_of_cycles > 15)
+	{
+		nr_of_cycles = 0;
+		for(uint8_t i = 1; i < 13; i++ )
+		{
+			beam_parameters[i] = 0;
+		}
+	}
 		
 	detect_peaks(20);	// threshold of 20 (16 mv), might be made user-configurable later
  	compute_beam_intensity(beam_parameters[2], beam_parameters[3], beam_parameters[5], beam_parameters[6]);
  	compute_fwhm(beam_parameters[2], beam_parameters[3], beam_parameters[5], beam_parameters[6]);
  	compute_skewness(beam_parameters[2], beam_parameters[3], beam_parameters[5], beam_parameters[6]);
 	 
-	beam_parameters[0] = 6666;
+	nr_of_cycles++;
+	
 	
 	
 }

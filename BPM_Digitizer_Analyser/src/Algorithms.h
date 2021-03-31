@@ -5,7 +5,8 @@
 #define buffersize 8334
 #include "buffer.h"
 
-double beam_parameters[13];
+double beam_parameters[14];
+uint16_t nr_of_cycles;
 
 	
 /**************************************************************************************************
