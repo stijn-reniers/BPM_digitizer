@@ -3,7 +3,10 @@
 
 uint16_t half_cycle_length = (buffersize-1)>>1;
 double beam_parameters[13] = {0};
-
+char toSendBuffer[33]={0};
+uint16_t* int16ConversionPtr= toSendBuffer;
+uint32_t* int32ConversionPtr= toSendBuffer+12;
+float* floatConversionPtr= toSendBuffer+24;
 /**************************************************************************************************
  ***************************** BEAM PARAMETER ALGORITHM IMPLEMENTATIONS ***************************
  **************************************************************************************************/
@@ -71,7 +74,7 @@ void detect_peaks(uint16_t threshold)
 	
 	beam_parameters[1] = peak1;
 	beam_parameters[4] = peak2;
-	
+
 			
 	// find left corner of X peak
 		
@@ -220,7 +223,7 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	  third_central = third_central/denominator;
 	
 	beam_parameters[12] = third_central;
-	
+	toSendBuffer[32]= 3;
 }
 
 
@@ -236,6 +239,15 @@ void compute_beam_parameters()
 	 
 	beam_parameters[0] = 6666;
 	
-	
+	for (int i=1; i<7;i++)
+	{
+		int16ConversionPtr[i-1]=(uint16_t)beam_parameters[i];
+	}
+	int32ConversionPtr[0]= (uint32_t) beam_parameters[7];
+	int32ConversionPtr[1]= (uint32_t) beam_parameters[8];
+	int16ConversionPtr[10]=(uint16_t) beam_parameters[9];
+	int16ConversionPtr[11]=(uint16_t) beam_parameters[10];
+	floatConversionPtr[0]=(float) beam_parameters[11];
+	floatConversionPtr[1]=(float) beam_parameters[12];
 }
 
