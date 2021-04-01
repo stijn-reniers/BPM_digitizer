@@ -59,6 +59,7 @@ int bdrate = 115200;
 uint16_t data, plotMax;
 char mode[] = { '8','N','1',0 };
 float plotF[plotSize];
+int beamPositionOrder[6] = { 1,4,0,3,2,5 }; 
 int triggerLevel = 0;
 int triggerDelay = 0;
 uint16_t* plot;
@@ -191,7 +192,16 @@ int main(int, char**)
                 ImGui::TableNextColumn();
                 ImGui::TableHeader("Y crossection");
                 double* parameter = getParameters();
-                for (int row = 0; row < 6; row++)
+                for (int row = 0; row < 3; row++) {
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::Text(titleParameters[row]);
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%f", parameter[beamPositionOrder[2*row]]);
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%f", parameter[beamPositionOrder[(2*row)+1]]);
+                }
+                for (int row = 3; row < 6; row++)
                 {                   
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
