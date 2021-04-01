@@ -13,6 +13,7 @@
 #include <time.h>
 #include <chrono>
 #include <thread>
+#include <string>
 #include "BPM_Reader.h"
 #define plotSize 8334
 
@@ -62,6 +63,7 @@ int triggerLevel = 0;
 int triggerDelay = 0;
 uint16_t* plot;
 char titleParameters[6][40] = { "Peak left edge" , "Peak centre" , "Peak right edge", "Beam intensity","Beam FWHM","Beam skewness" };
+std::string ecchoMessage = "";
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -152,7 +154,7 @@ int main(int, char**)
         return(0);
     }
     RS232_flushRXTX(3);
-    std::thread thread_obj(requestData);
+    std::thread thread_obj(requestData,ecchoMessage);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -239,6 +241,7 @@ int main(int, char**)
                 }
                 updateTriggerDelay(triggerDelay);
             }
+            ImGui::Text(ecchoMessage.c_str());
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }

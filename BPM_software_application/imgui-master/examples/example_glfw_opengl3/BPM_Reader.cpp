@@ -1,13 +1,15 @@
 #include "BPM_Reader.h"
-
+// variables
 bool running = true, newPlotData = false;
 double parameter[12] = { 0 };
-int n=0;
-uint16_t plot[plotSize];
+int n = 0;
+uint16_t receivedPlot[plotSize];
 double syncData;
 unsigned char buf[255];
 bool newTriggerLevel = false, newTriggerDelay = false;
 char tLevel = 255, tDelay = 0;
+
+
 //update a certain amount of parameters from a given start index
 void updateParameters(uint8_t amount, uint8_t startingIndex) {
     uint8_t reading = 0;
@@ -49,7 +51,7 @@ void requestPlot() {
     //wait for the plot data to become available
     Sleep(2000);
     int i = 0;
-    n = RS232_PollComport(cport_nr, ((unsigned char*)plot) + 1, 16668);
+    n = RS232_PollComport(cport_nr, ((unsigned char*)receivedPlot) + 1, 16668);
     std::cout << n << std::endl;
     newPlotData = true;
     
@@ -73,9 +75,27 @@ void updateTriggerDelay(int delay) {
     newTriggerDelay = true;
     tDelay = (char)delay;
 }
-
+void changeSettings(char commando, char value, std::string & message) {
+    RS232_SendByte(cport_nr, 255);
+    RS232_SendByte(cport_nr, commando);
+    RS232_SendByte(cport_nr, value);
+    std::this_thread::sleep_for(std::chrono::microseconds(1));
+    RS232_PollComport(cport_nr, buf, 3);
+    if (buf[0] == 255) {
+        if (buf[1] == 0) {
+            message = "eccho message received trigger delay has now been set to = " + std::string(1, buf[2]) + "ms";
+        }
+        if (buf[2] == 1) {
+            message = "eccho message received trigger level has now been set to = " + std::string(1, buf[2]);
+        }
+       
+    }   
+    else {
+        message = "failed to recognize eccho message";
+    }
+}
 // reader thread
-void requestData() {
+void requestData(std::string & message) {
     int i = 0;
     while (running) {
         //request parameter
@@ -87,15 +107,11 @@ void requestData() {
 
         //update parameters if necessary
         if (newTriggerDelay) {
-            RS232_SendByte(cport_nr, 255);
-            RS232_SendByte(cport_nr, 0);
-            RS232_SendByte(cport_nr, tDelay);
+            changeSettings(0, tDelay, message);
             newTriggerDelay = false;
         }
         if (newTriggerLevel) {
-            RS232_SendByte(cport_nr, 255);
-            RS232_SendByte(cport_nr, 1);
-            RS232_SendByte(cport_nr, tLevel);
+            changeSettings(1, tLevel, message);
             newTriggerLevel = false;
         }
         //request plot every couple of seconds
@@ -136,5 +152,5 @@ void setNewPlotData(bool status)
 
 uint16_t* getPlot()
 {
-    return plot;
+    return receivedPlot;
 }
