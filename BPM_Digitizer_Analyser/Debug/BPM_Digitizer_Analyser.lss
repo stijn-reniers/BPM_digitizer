@@ -1220,7 +1220,7 @@ void compute_avgd_parameters()
   400996:	d1d9      	bne.n	40094c <compute_avgd_parameters+0x84>
   400998:	f8df b128 	ldr.w	fp, [pc, #296]	; 400ac4 <compute_avgd_parameters+0x1fc>
   40099c:	2300      	movs	r3, #0
-	
+	}
 	
 	
 	for(uint8_t i = 0 ; i < 2; i++)

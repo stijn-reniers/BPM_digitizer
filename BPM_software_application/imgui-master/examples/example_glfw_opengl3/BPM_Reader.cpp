@@ -9,7 +9,11 @@ unsigned char buf[255];
 bool newTriggerLevel = false, newTriggerDelay = false;
 char tLevel = 255, tDelay = 0;
 
-
+void resetBuffer() {
+    for (int i = 0;i < 8;i++) {
+        buf[i] = 0;
+    }
+}
 //update a certain amount of parameters from a given start index
 void updateParameters(uint8_t amount, uint8_t startingIndex) {
     uint8_t reading = 0;
@@ -50,11 +54,11 @@ void requestPlot() {
     RS232_SendByte(cport_nr, 255);
     //wait for the plot data to become available
     Sleep(2000);
-    int i = 0;
-    n = RS232_PollComport(cport_nr, ((unsigned char*)receivedPlot)+1, 16668);
+    RS232_PollComport(cport_nr, buf, 3);
+    n = RS232_PollComport(cport_nr, ((unsigned char*)receivedPlot) + 1, 16668);
     std::cout << n << std::endl;
     newPlotData = true;
-    
+    resetBuffer();
 }
 
 // send a parameter request to the atmel microcontroller and reads the incoming data
@@ -63,7 +67,9 @@ void requestParameters() {
     RS232_SendByte(cport_nr, 2);
     RS232_SendByte(cport_nr, 255);
     std::this_thread::sleep_for(std::chrono::microseconds(10));
+    RS232_PollComport(cport_nr, buf, 3);
     recieveData();
+    resetBuffer();
 }
 //updates trigger level
 void updateTriggerLevel(int level) {
@@ -75,7 +81,7 @@ void updateTriggerDelay(int delay) {
     newTriggerDelay = true;
     tDelay = (char)delay;
 }
-void changeSettings(char commando, char value, std::string & message) {
+void changeSettings(char commando, char value, std::string& message) {
     RS232_SendByte(cport_nr, 255);
     RS232_SendByte(cport_nr, commando);
     RS232_SendByte(cport_nr, value);
@@ -88,14 +94,14 @@ void changeSettings(char commando, char value, std::string & message) {
         if (buf[2] == 1) {
             message = "eccho message received trigger level has now been set to = " + std::string(1, buf[2]);
         }
-       
-    }   
+
+    }
     else {
         message = "failed to recognize eccho message";
     }
 }
 // reader thread
-void requestData(std::string & message) {
+void requestData(std::string& message) {
     int i = 0;
     while (running) {
         //request parameter
