@@ -8,7 +8,7 @@
 #include <thread>
 #include <string>
 #define plotSize 8334
-#define cport_nr 3
+#define cport_nr 4
 
 
 //functions

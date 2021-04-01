@@ -51,7 +51,7 @@ void requestPlot() {
     //wait for the plot data to become available
     Sleep(2000);
     int i = 0;
-    n = RS232_PollComport(cport_nr, ((unsigned char*)receivedPlot) + 1, 16668);
+    n = RS232_PollComport(cport_nr, ((unsigned char*)receivedPlot)+1, 16668);
     std::cout << n << std::endl;
     newPlotData = true;
     

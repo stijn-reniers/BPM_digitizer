@@ -50,6 +50,10 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 
 void compute_beam_parameters(void);
 
+/* compute 16 cycle average of each parameter*/
+
+void compute_avgd_parameters(void);
+
 
 #endif /* ALGORITHMS_H_ */
 

@@ -59,6 +59,7 @@ void send_cycle_plot()
 
 void send_beam_parameters()
 {
+	compute_avgd_parameters();
 	beam_parameters[0] = 6666;
 	beam_parameters[7] = 7777;
 	pdc_tx_init(g_p_uart_pdc, &beam_parameters_packet, NULL);
