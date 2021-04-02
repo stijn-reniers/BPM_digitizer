@@ -2,7 +2,20 @@
 
 
 uint16_t half_cycle_length = (buffersize-1)>>1;
+
 double beam_parameters[14] = {0};
+
+//------- Byte-based fashion of sending data -------//
+
+// Array consists of 1 start byte - 28 data bytes - 1 stop byte
+
+uint8_t beam_parameters_bytes[30] = {0};
+uint16_t* peakLocationPtr = (uint16_t*) (beam_parameters_bytes+1);
+uint32_t* intensityPtr = (uint32_t*)(beam_parameters_bytes+13);
+uint16_t* fwhmPtr = (uint16_t*)(beam_parameters_bytes+17);
+float* skewnessPtr = (float*)(beam_parameters_bytes+21);
+
+// ------ 2D-arrays containing circularly buffered parameter values of the last 16 cycles ----//
 
 uint16_t peak_location[7][16] = {0};
 uint32_t beam_intensity[2][16] ={0};
@@ -76,10 +89,7 @@ void detect_peaks(uint16_t threshold)
 	uint16_t peak2 = half_cycle_length + find_max(algorithm_buffer + half_cycle_length, half_cycle_length);
 	
 	// Use peak1 and peak2 to find the 4 corner points of the beams, possibly combine with dispersion-based algorithm
-	
-	//		beam_parameters[1] = peak1;
-	//		beam_parameters[4] = peak2;
-	
+		
 	peak_location[0][cycle] = peak1;
 	peak_location[3][cycle] = peak2;
 
@@ -90,7 +100,6 @@ void detect_peaks(uint16_t threshold)
 	{
 		if(algorithm_buffer[peak1 - i] < threshold)
 		{
-			// beam_parameters[2] = peak1-i;
 			peak_location[1][cycle] = peak1-i;
 			break;
 		}
@@ -103,7 +112,6 @@ void detect_peaks(uint16_t threshold)
 	{
 		if(algorithm_buffer [peak1 + i] < threshold)
 		{
-			//beam_parameters[3] = peak1+i;
 			peak_location[2][cycle] = peak1 + i;
 			break;
 		}
@@ -117,7 +125,6 @@ void detect_peaks(uint16_t threshold)
 	{
 		if(algorithm_buffer[peak2 - i] < threshold)
 		{
-			//beam_parameters[5] = peak2-i;
 			peak_location[4][cycle] = peak2-i;
 			break;
 		}
@@ -131,7 +138,6 @@ void detect_peaks(uint16_t threshold)
 	{
 		if(algorithm_buffer[peak2 + i] < threshold)
 		{
-			//beam_parameters[6] = peak2+i;
 			peak_location[5][cycle] = peak2 + i;
 			break;
 		}
@@ -146,21 +152,17 @@ void detect_peaks(uint16_t threshold)
 
 void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right)
 {
-	//beam_parameters[8] = 0;
-	//beam_parameters[9] = 0;
 	
 	beam_intensity[0][cycle] = 0;
 	beam_intensity[1][cycle] = 0;
 	
 	for (uint16_t i = peak1_left; i < peak1_right ; i++)
 	{
-		//beam_parameters[8] += (uint32_t)algorithm_buffer[i];
 		beam_intensity[0][cycle] += (uint32_t)algorithm_buffer[i];
 	}
 	
 	for (uint16_t i = peak2_left; i < peak2_right ; i++)
 	{
-		//beam_parameters[9] += (uint32_t)algorithm_buffer[i];
 		beam_intensity[1][cycle] += (uint32_t)algorithm_buffer[i];
 	}
 	
@@ -186,7 +188,6 @@ void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left
 	}
 	variance=summed/sum(peak1_left,peak1_right);
 	
-	//beam_parameters[10]= (uint16_t)(sqrt(variance)*2.355);
 	fwhm[0][cycle] = (uint16_t)(sqrt(variance)*2.355);
 	
 	summed=0;
@@ -196,8 +197,7 @@ void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left
 		summed+= (pow((i-mean[1]),2)*algorithm_buffer[i]);
 	}
 	variance=summed/sum(peak2_left,peak2_right);
-	//beam_parameters[11]=(uint16_t) (sqrt(variance)*2.355);
-	fwhm[1][cycle] = (uint16_t)(sqrt(variance)*2.355);
+		fwhm[1][cycle] = (uint16_t)(sqrt(variance)*2.355);
 }
 
 
@@ -229,7 +229,6 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	double denominator = sqrt(second_central*second_central*second_central);
 	third_central = third_central/denominator;
 	
-	//beam_parameters[12] = third_central;
 	skewness[0][cycle] = third_central;
 	
 	third_central = 0;
@@ -249,7 +248,6 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	denominator = sqrt(second_central*second_central*second_central);
 	third_central = third_central/denominator;
 	
-	//beam_parameters[13] = third_central;
 	skewness[1][cycle] = third_central;
 }
 
@@ -273,6 +271,9 @@ void compute_beam_parameters()
 
 void compute_avgd_parameters()
 {
+	/*
+	
+	// Double-based parameter array computations
 	
 	for (uint8_t i = 0; i< 14 ; i++) beam_parameters[i] = 0;
 	
@@ -300,6 +301,48 @@ void compute_avgd_parameters()
 	
 	for (uint8_t j = 0; j < 16; j++) beam_parameters[13] += skewness[1][j];
 	beam_parameters[13] = (float) (beam_parameters[13] / 16);
+	
+	*/
+	
+	
+	
+	// Byte-based parameter array computations
+	
+	
+	
+	for (uint8_t i=0; i<6;i++)
+	{		
+		average_peak_info = 0;
+		for (uint8_t j = 0; j < 16; j++) average_peak_info += peak_location[i][j];
+		peakLocationPtr[i]= (uint16_t)(average_peak_info/16);
+	}
+	
+	
+	average_intensity = 0;
+	for (uint8_t i=0; i<2;i++)
+	{
+		for (uint8_t j = 0; j < 16; j++) average_intensity += beam_intensity[i][j];
+	}
+	
+	*intensityPtr = (uint32_t)(average_intensity/32);
+	
+	
+	
+	for (uint8_t i=0; i<2;i++)
+	{
+		average_fwhm = 0;
+		for (uint8_t j = 0; j < 16; j++) average_fwhm += fwhm[i][j];
+		fwhmPtr[i]= (uint16_t)(average_fwhm/16);
+	}
+	
+	
+	for (uint8_t i=0; i<2;i++)
+	{
+		average_skewness = 0;
+		for (uint8_t j = 0; j < 16; j++) average_skewness += skewness[i][j];
+		skewnessPtr[i]=  (float) (average_skewness/16);
+	}
+	
 	
 	
 	

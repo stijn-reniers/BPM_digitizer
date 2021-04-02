@@ -6,8 +6,21 @@
 #include "buffer.h"
 
 double beam_parameters[14];
-uint16_t nr_of_cycles;
+uint8_t beam_parameters_bytes[30];
 
+uint16_t peak_location[7][16];
+uint32_t beam_intensity[2][16];
+uint16_t fwhm[2][16];
+float skewness[2][16];
+
+uint16_t cycle;
+
+// Accumulators to compute average values
+
+uint32_t average_peak_info;
+uint32_t average_intensity;
+uint32_t average_fwhm;
+double average_skewness;
 	
 /**************************************************************************************************
  ***************************** BEAM PARAMETER ALGORITHMS ******************************************

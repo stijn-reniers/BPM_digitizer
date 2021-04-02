@@ -11,7 +11,7 @@
 
 /* Size of the Pdc transmit buffer (echoing the Matlab-host commands, omitted in case of C++ ImGUI host) in BYTES*/
 #define BUFFER_SIZE_HOST_COMMAND  3	
-#define BUFFER_SIZE_PARAMETERS	  112
+#define BUFFER_SIZE_PARAMETERS	  30				// change to 112 for double-based transmission
 #define BUFFER_SIZE_PLOTDATA	  16668					
 
 /* Pdc transfer buffer */
@@ -60,8 +60,10 @@ void send_cycle_plot()
 void send_beam_parameters()
 {
 	compute_avgd_parameters();
-	beam_parameters[0] = 6666;
-	beam_parameters[7] = 7777;
+	beam_parameters_bytes[0] = 111;
+	beam_parameters_bytes[29] = 222;
+	//beam_parameters[0] = 6666;
+	//beam_parameters[7] = 7777;
 	pdc_tx_init(g_p_uart_pdc, &beam_parameters_packet, NULL);
 	config[2] = 0;																		// reset parameter data flag in configuration array
 }
@@ -105,7 +107,7 @@ void pdc_uart_initialization(void)
 	g_pdc_uart_packet.ul_addr = (uint32_t) host_command;					// receive buffer which we also echo back to the computer
 	g_pdc_uart_packet.ul_size = BUFFER_SIZE_HOST_COMMAND;								
 	
-	beam_parameters_packet.ul_addr = (uint32_t) beam_parameters;			// transmit packet/buffer for beam parameters
+	beam_parameters_packet.ul_addr = (uint32_t) beam_parameters_bytes;			// transmit packet/buffer for beam parameters
 	beam_parameters_packet.ul_size = BUFFER_SIZE_PARAMETERS;
 	
 	cycle_plot_packet.ul_addr = (uint32_t) transmit_buffer;					// start address of transfer packet data is the buffer we defined ourselves
