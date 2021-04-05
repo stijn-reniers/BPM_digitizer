@@ -155,7 +155,7 @@ int main(int, char**)
         return(0);
     }
     RS232_flushRXTX(3);
-    std::thread thread_obj(requestData,ecchoMessage);
+    std::thread thread_obj(requestData,&ecchoMessage);
 
     // Main loop
     while (!glfwWindowShouldClose(window))

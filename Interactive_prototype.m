@@ -10,7 +10,7 @@ end
 
 
 %% Create COM port object to communicate with SAM4E Xplained Pro
-s = serialport('COM5', 115200);     % assigns object s to serial port
+s = serialport('COM4', 115200);     % assigns object s to serial port
 
 global beam_parameters;             % global parameter, since it is also used in the plotting routines
 global h;                           % global parameter to store beam parameter update text, deleted at every update
