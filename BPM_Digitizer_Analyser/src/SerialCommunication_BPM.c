@@ -11,7 +11,7 @@
 
 /* Size of the Pdc transmit buffer (echoing the Matlab-host commands, omitted in case of C++ ImGUI host) in BYTES*/
 #define BUFFER_SIZE_HOST_COMMAND  3	
-#define BUFFER_SIZE_PARAMETERS	  30				// change to 112 for double-based transmission
+#define BUFFER_SIZE_PARAMETERS	  38				// change to 112 for double-based transmission
 #define BUFFER_SIZE_PLOTDATA	  16668					
 
 /* Pdc transfer buffer */
@@ -61,7 +61,7 @@ void send_beam_parameters()
 {
 	compute_avgd_parameters();
 	beam_parameters_bytes[0] = 111;
-	beam_parameters_bytes[29] = 222;
+	beam_parameters_bytes[37] = 222;
 	//beam_parameters[0] = 6666;
 	//beam_parameters[7] = 7777;
 	pdc_tx_init(g_p_uart_pdc, &beam_parameters_packet, NULL);

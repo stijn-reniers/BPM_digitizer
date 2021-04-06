@@ -6,7 +6,7 @@
 #include "buffer.h"
 
 double beam_parameters[14];
-uint8_t beam_parameters_bytes[30];
+uint8_t beam_parameters_bytes[38];
 
 uint16_t peak_location[7][16];
 uint32_t beam_intensity[2][16];
@@ -21,6 +21,7 @@ uint32_t average_peak_info;
 uint32_t average_intensity;
 uint32_t average_fwhm;
 double average_skewness;
+double peak_varience;
 	
 /**************************************************************************************************
  ***************************** BEAM PARAMETER ALGORITHMS ******************************************

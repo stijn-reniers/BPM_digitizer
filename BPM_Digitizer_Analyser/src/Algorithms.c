@@ -7,14 +7,14 @@ double beam_parameters[14] = {0};
 
 //------- Byte-based fashion of sending data -------//
 
-// Array consists of 1 start byte - 28 data bytes - 1 stop byte
+// Array consists of 1 start byte - 32 data bytes - 1 stop byte
 
-uint8_t beam_parameters_bytes[30] = {0};
+uint8_t beam_parameters_bytes[38] = {0};
 uint16_t* peakLocationPtr = (uint16_t*) (beam_parameters_bytes+1);
 uint32_t* intensityPtr = (uint32_t*)(beam_parameters_bytes+13);
 uint16_t* fwhmPtr = (uint16_t*)(beam_parameters_bytes+17);
 float* skewnessPtr = (float*)(beam_parameters_bytes+21);
-
+float* stdDevPtr = (float*) (beam_parameters_bytes+29);
 // ------ 2D-arrays containing circularly buffered parameter values of the last 16 cycles ----//
 
 uint16_t peak_location[7][16] = {0};
@@ -307,9 +307,7 @@ void compute_avgd_parameters()
 	
 	
 	// Byte-based parameter array computations
-	
-	
-	
+	// average peak info
 	for (uint8_t i=0; i<6;i++)
 	{		
 		average_peak_info = 0;
@@ -317,7 +315,17 @@ void compute_avgd_parameters()
 		peakLocationPtr[i]= (uint16_t)(average_peak_info/16);
 	}
 	
-	
+	//peak variance
+	for(uint8_t i=0; i<4; i+=3){
+		peak_varience=0;
+		for(uint8_t j=0; j<16;j++) peak_varience+= (peak_location[i][j]-peakLocationPtr[i])*(peak_location[i][j]-peakLocationPtr[i]);
+		if(i==0){
+			stdDevPtr[0]= (float)sqrt(peak_varience/15);
+		}else{
+			stdDevPtr[1]= (float)sqrt(peak_varience/15);
+		}
+	}
+	// average intensity
 	average_intensity = 0;
 	for (uint8_t i=0; i<2;i++)
 	{
@@ -327,7 +335,7 @@ void compute_avgd_parameters()
 	*intensityPtr = (uint32_t)(average_intensity/32);
 	
 	
-	
+	//average fwhm
 	for (uint8_t i=0; i<2;i++)
 	{
 		average_fwhm = 0;
@@ -335,7 +343,7 @@ void compute_avgd_parameters()
 		fwhmPtr[i]= (uint16_t)(average_fwhm/16);
 	}
 	
-	
+	//average skewness
 	for (uint8_t i=0; i<2;i++)
 	{
 		average_skewness = 0;
@@ -347,3 +355,4 @@ void compute_avgd_parameters()
 	
 	
 }
+
