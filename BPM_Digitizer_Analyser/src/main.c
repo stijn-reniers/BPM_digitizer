@@ -76,7 +76,7 @@ static void setDelayTimer(int delayFreq);
 void ACC_Handler(void)
 {
 	triggerOffset = config[0];												// Obtain the trigger offset from configuration array
-	if (triggerOffset > 67) triggerOffset = 67;								// Set trigger offset to 67 if larger (upper limit of one cycle)
+	if (triggerOffset > 60) triggerOffset = 60;								// Set trigger offset to 67 if larger (upper limit of one cycle)
 	
 	uint32_t ul_status;
 	ul_status = acc_get_interrupt_status(ACC);								

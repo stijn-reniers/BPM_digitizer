@@ -54,7 +54,7 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 
 /* Compute FWHM X and Y */
 
- void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right);
+ void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right,uint16_t peak1_max, uint16_t peak2_max);
 
 /* Compute skewness of the beam  X and Y */
 
