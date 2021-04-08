@@ -19,6 +19,8 @@ uint16_t *transmit_buffer;
 
 void swap(uint16_t** x, uint16_t** y);
 
+void copyCollectorBuffer(uint16_t* to);
+
 void sendBuffer(void);
 
 void addSampleCollector(uint16_t sample);

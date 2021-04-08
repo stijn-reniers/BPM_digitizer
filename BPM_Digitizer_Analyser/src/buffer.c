@@ -18,7 +18,7 @@ uint16_t* afec_buffer_collector = buffer0;
 uint16_t* algorithm_buffer = buffer1;
 uint16_t* transmit_buffer = buffer2;
 
-
+bool measuredOnce=false;
 /* Add sample to the signal buffer */
 
 void addSampleCollector(uint16_t sample){
@@ -38,23 +38,31 @@ void swap(uint16_t** x, uint16_t** y){
 	*y=temp;
 }
 
-
+void copyCollectorBuffer(uint16_t* to){
+	for(int i=0; i<buffersize;i++){
+		to[i]= 	afec_buffer_collector[i];
+	}
+}
 /* Buffer switch operation, signal buffer and algorithm are switched. 
    If 16 buffers have been filled, the contents of the algorithm buffer are switched to the transmit buffer. */
 
 volatile void switchBuffer(void){
-	
-	buffersFilled++;
-	if (buffersFilled>16)
-	{
-		buffersFilled=0; 
-		swap(&algorithm_buffer, &transmit_buffer);
-	} 
-	
 	bufferIndexCollector=0;
+	if (buffersFilled==16 && !measuredOnce)
+	{
+		copyCollectorBuffer(algorithm_buffer);
+		copyCollectorBuffer(transmit_buffer);
+		//buffersFilled=0; 
+		//swap(&algorithm_buffer, &transmit_buffer);
+		measuredOnce=true;
+	}else{
+		buffersFilled++;
+	}
 	
 	
-	swap(&afec_buffer_collector, &algorithm_buffer);
+	
+	
+	//swap(&afec_buffer_collector, &algorithm_buffer);
 	
 }
 

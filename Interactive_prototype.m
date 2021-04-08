@@ -152,7 +152,22 @@ function request_plot(~, ~, serialport)
     subplot('Position',[0.75,0.05,0.15,0.2]);
     contour(X,Y,grid);
     title('Beam intensity contour plot');
-
+    
+    %intensity check
+    Intensity= sum(plot_data(beam_parameters(2):beam_parameters(3))) + sum(plot_data(beam_parameters(5):beam_parameters(6)))
+    IntensityDiff= (Intensity - sum(beam_parameters(7:8)))/Intensity
+    
+    %FWHM check
+    
+    FWHM1= fwhm((1:peak_width_1),plot_data(beam_parameters(2):beam_parameters(3)))
+    FWHM1Diff= (FWHM1-beam_parameters(9))/FWHM1
+    FWHM2= fwhm((1:peak_width_1),plot_data(beam_parameters(5):beam_parameters(6)))
+    FWHM2Diff= (FWHM2-beam_parameters(10))/FWHM2
+    %Skewness check
+    skewness1= skewness(plot_data(beam_parameters(2):beam_parameters(3)))
+    skewness1Diff=(skewness1-beam_parameters(11))/skewness1
+    skewness2= skewness(plot_data(beam_parameters(5):beam_parameters(6)))
+    skewness2Diff=(skewness2-beam_parameters(12))/skewness2
 end
 
 % Request the beam parameter info from the microcontroller
@@ -189,7 +204,7 @@ function request_params(~, ~, serialport)
     z = read(serialport,1,'double')
     beam_parameters(7:12) = read(serialport,6,'double');
     
-
+    
     % Create beam parameter window
     
     % Delete the text from previous update
@@ -226,6 +241,7 @@ function request_params(~, ~, serialport)
     h = text(0,0.4,beam_str, 'FontSize', 10);
     set ( ax, 'visible', 'off')
    
+    
     
 end
 
