@@ -229,9 +229,9 @@ int main(int, char**)
                 }
                 ImGui::PlotLines("Lines", plotF, 8334,0,0,0,plotMax+100, ImVec2(1800, 600));
             }
-            ImGui::InputInt("Trigger level", &triggerLevel);
+            ImGui::InputInt("Collector Offset", &triggerLevel);
             ImGui::SameLine();
-            if (ImGui::Button("Update level")) {
+            if (ImGui::Button("Update Offset")) {
                 if (triggerLevel > 255) {
                     triggerLevel = 255;
                 }
