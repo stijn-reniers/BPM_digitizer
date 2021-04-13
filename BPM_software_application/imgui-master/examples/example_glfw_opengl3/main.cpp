@@ -59,10 +59,11 @@ int bdrate = 115200;
 uint16_t data, plotMax;
 char mode[] = { '8','N','1',0 };
 float plotF[plotSize];
+int beamPositionOrder[6] = { 1,4,0,3,2,5 };
 int triggerLevel = 0;
 int triggerDelay = 0;
 uint16_t* plot;
-char titleParameters[6][40] = { "Peak left edge" , "Peak centre" , "Peak right edge", "Beam intensity","Beam FWHM","Beam skewness" };
+char titleParameters[7][40] = { "Peak left edge" , "Peak centre" , "Peak right edge","Peak deviation", "Beam intensity","Beam FWHM","Beam skewness" };
 std::string ecchoMessage = "";
 static void glfw_error_callback(int error, const char* description)
 {
@@ -144,7 +145,7 @@ int main(int, char**)
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-   
+
 
     // Open COM connection and start thread
     if (RS232_OpenComport(cport_nr, bdrate, mode, 0))
@@ -154,11 +155,11 @@ int main(int, char**)
         return(0);
     }
     RS232_flushRXTX(3);
-    std::thread thread_obj(requestData,ecchoMessage);
+    std::thread thread_obj(requestData, &ecchoMessage);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
-    {        
+    {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -179,32 +180,64 @@ int main(int, char**)
         {
             static float f = 0.0f;
             static int counter = 0;
-            ImVec2 size{ 1960,1080 };
+            ImVec2 size{ 1800,900 };
             static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
             ImGui::Begin("BPM monitor");                          // Create a window called "Hello, world!" and append into it.
             ImGui::SetWindowSize(size);
-            if (ImGui::BeginTable("Parameters", 3,flags)) {
+            if (ImGui::BeginTable("Parameters", 3, flags)) {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::TableNextColumn();
                 ImGui::TableHeader("X crossection");
                 ImGui::TableNextColumn();
                 ImGui::TableHeader("Y crossection");
-                double* parameter = getParameters();
-                for (int row = 0; row < 6; row++)
-                {                   
+                uint16_t* positions = getBeamPostion();
+                for (int row = 0; row < 3; row++) {
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     ImGui::Text(titleParameters[row]);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%f",parameter[(2*row)]);
+                    ImGui::Text("%u", positions[beamPositionOrder[2 * row]]);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%f",parameter[(2*row)+1]);
+                    ImGui::Text("%u", positions[beamPositionOrder[(2 * row) + 1]]);
                 }
-                
+                //deviation
+                float* stdeviation = getDeviation();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[3]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f",stdeviation[0]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f", stdeviation[1]);
+                //Intensity
+                uint32_t* intensity = getIntensity();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[4]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%u", *intensity);
+                //FWHM
+                uint16_t* FWHM = getFwhm();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[5]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%u", FWHM[0]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%u", FWHM[1]);
+                //skewness
+                float* skewness = getSkewness();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[6]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f", skewness[0]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f", skewness[1]);
                 ImGui::EndTable();
             }
-           
+
             {
                 if (getNewPlotData()) {
                     plotMax = 0;
@@ -215,13 +248,15 @@ int main(int, char**)
                             plotMax = plotF[i];
                         }
                     }
-                    setNewPlotData(false); 
+                    setNewPlotData(false);
                 }
-                ImGui::PlotLines("Lines", plotF, 8334,0,0,0,plotMax+100, ImVec2(1800, 600));
+                ImGui::PlotLines("Lines", plotF, 8334, 0, 0, 0, plotMax + 100, ImVec2(1800, 600));
             }
-            ImGui::InputInt("Trigger level", &triggerLevel);
+            ImGui::Text("Seconds between plot update");
+            ImGui::SliderInt("plot update freq", getPlotUpdateFreqPtr(), 1, 60);
+            ImGui::InputInt("Collector Offset", &triggerLevel);
             ImGui::SameLine();
-            if (ImGui::Button("Update level")) {
+            if (ImGui::Button("Update Offset")) {
                 if (triggerLevel > 255) {
                     triggerLevel = 255;
                 }
@@ -230,10 +265,10 @@ int main(int, char**)
                 }
                 updateTriggerLevel(triggerLevel);
             }
-            ImGui::InputInt("Trigger Delay",&triggerDelay);
+            ImGui::InputInt("Trigger Delay", &triggerDelay);
             ImGui::SameLine();
             if (ImGui::Button("Update Delay")) {
-                if (triggerDelay>33) {
+                if (triggerDelay > 33) {
                     triggerDelay = 33;
                 }
                 if (triggerDelay < 0) {
@@ -242,11 +277,12 @@ int main(int, char**)
                 updateTriggerDelay(triggerDelay);
             }
             ImGui::Text(ecchoMessage.c_str());
+            
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
-        
+
 
         // Rendering
         ImGui::Render();
@@ -271,6 +307,4 @@ int main(int, char**)
 
     return 0;
 }
-
-
 
