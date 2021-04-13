@@ -56,6 +56,20 @@ volatile void switchBuffer(void){
 	
 	swap(&afec_buffer_collector, &algorithm_buffer);
 	
+	/*
+		buffersFilled++;
+		if (buffersFilled<32)
+		{
+			swap(&algorithm_buffer, &transmit_buffer);
+			swap(&afec_buffer_collector, &algorithm_buffer);
+		}
+		
+		bufferIndexCollector= 0;
+		
+		if (buffersFilled>32) buffersFilled = 32;
+			
+	*/
+	
 }
 
 /* Fills possible gap at the end of the signal buffer with zeros, and performs the buffer pointer switch */

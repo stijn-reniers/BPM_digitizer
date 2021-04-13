@@ -40,11 +40,12 @@
           <option id="sam.drivers.acc" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.afec" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.dacc" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="sam.drivers.pdc" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.pmc" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.tc.appnote" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.uart" value="Add" config="" content-id="Atmel.ASF" />
           <option id="thirdparty.wireless.addons.sio2host" value="Add" config="uart" content-id="Atmel.ASF" />
-          <option id="sam.drivers.pdc" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="sam.drivers.rstc" value="Add" config="" content-id="Atmel.ASF" />
           <option id="common.applications.user_application.xplained_pro" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.utils.cmsis.sam4e.source.template" value="Add" config="" content-id="Atmel.ASF" />
         </options>
@@ -229,6 +230,9 @@
           <file path="src/ASF/sam/drivers/pdc/pdc.c" framework="" version="3.47.0" source="sam\drivers\pdc\pdc.c" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/sam/drivers/pdc/pdc.h" framework="" version="3.47.0" source="sam\drivers\pdc\pdc.h" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/sam/drivers/pdc/pdc_uart_example/pdc_uart_example.h" framework="" version="3.47.0" source="sam\drivers\pdc\pdc_uart_example\pdc_uart_example.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/drivers/rstc/rstc.c" framework="" version="3.47.0" source="sam\drivers\rstc\rstc.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/drivers/rstc/rstc.h" framework="" version="3.47.0" source="sam\drivers\rstc\rstc.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/drivers/rstc/example1/rstc_example1.h" framework="" version="3.47.0" source="sam\drivers\rstc\example1\rstc_example1.h" changed="False" content-id="Atmel.ASF" />
         </files>
         <documentation help="http://asf.atmel.com/docs/3.47.0/common.applications.user_application.xplained_pro.sam4e_xplained_pro/html/index.html" />
         <offline-documentation help="" />
@@ -291,6 +295,8 @@
       <Value>../src/ASF/sam/drivers/dacc</Value>
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
+      <Value>../src/ASF/sam/drivers/rstc/example1</Value>
+      <Value>../src/ASF/sam/drivers/rstc</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
@@ -344,6 +350,8 @@
       <Value>../src/ASF/sam/drivers/dacc</Value>
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
+      <Value>../src/ASF/sam/drivers/rstc/example1</Value>
+      <Value>../src/ASF/sam/drivers/rstc</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.preprocessingassembler.general.AssemblerFlags>-DARM_MATH_CM4=true -DBOARD=SAM4E_XPLAINED_PRO -D__SAM4E16E__ -Dprintf=iprintf -Dscanf=iscanf</armgcc.preprocessingassembler.general.AssemblerFlags>
@@ -380,6 +388,8 @@
       <Value>../src/ASF/sam/drivers/dacc</Value>
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
+      <Value>../src/ASF/sam/drivers/rstc/example1</Value>
+      <Value>../src/ASF/sam/drivers/rstc</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
 </ArmGcc>
@@ -436,6 +446,8 @@
       <Value>../src/ASF/sam/drivers/dacc</Value>
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
+      <Value>../src/ASF/sam/drivers/rstc/example1</Value>
+      <Value>../src/ASF/sam/drivers/rstc</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
@@ -490,6 +502,8 @@
       <Value>../src/ASF/sam/drivers/dacc</Value>
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
+      <Value>../src/ASF/sam/drivers/rstc/example1</Value>
+      <Value>../src/ASF/sam/drivers/rstc</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
@@ -527,6 +541,8 @@
       <Value>../src/ASF/sam/drivers/dacc</Value>
       <Value>../src/ASF/sam/drivers/pdc</Value>
       <Value>../src/ASF/sam/drivers/pdc/pdc_uart_example</Value>
+      <Value>../src/ASF/sam/drivers/rstc/example1</Value>
+      <Value>../src/ASF/sam/drivers/rstc</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -564,6 +580,8 @@
     <Folder Include="src\ASF\sam\drivers\pdc\" />
     <Folder Include="src\ASF\sam\drivers\pdc\pdc_uart_example\" />
     <Folder Include="src\ASF\sam\drivers\pmc\" />
+    <Folder Include="src\ASF\sam\drivers\rstc\" />
+    <Folder Include="src\ASF\sam\drivers\rstc\example1\" />
     <Folder Include="src\ASF\sam\drivers\tc\" />
     <Folder Include="src\ASF\sam\drivers\tc\tc_capture_waveform_example\" />
     <Folder Include="src\ASF\sam\drivers\uart\" />
@@ -610,6 +628,15 @@
       <SubType>compile</SubType>
     </None>
     <None Include="src\ASF\sam\drivers\pdc\pdc_uart_example\pdc_uart_example.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\sam\drivers\rstc\example1\rstc_example1.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\sam\drivers\rstc\rstc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\rstc\rstc.h">
       <SubType>compile</SubType>
     </None>
     <Compile Include="src\config\conf_pdc_uart.h">

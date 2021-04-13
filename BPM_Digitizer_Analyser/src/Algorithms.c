@@ -1,19 +1,18 @@
 #include "algorithms.h"
 
-
 uint16_t half_cycle_length = (buffersize-1)>>1;
-
-double beam_parameters[14] = {0};
 
 //------- Byte-based fashion of sending data -------//
 
 // Array consists of 1 start byte - 28 data bytes - 1 stop byte
 
-uint8_t beam_parameters_bytes[30] = {0};
+uint8_t beam_parameters_bytes[38] = {0};
 uint16_t* peakLocationPtr = (uint16_t*) (beam_parameters_bytes+1);
 uint32_t* intensityPtr = (uint32_t*)(beam_parameters_bytes+13);
 uint16_t* fwhmPtr = (uint16_t*)(beam_parameters_bytes+17);
 float* skewnessPtr = (float*)(beam_parameters_bytes+21);
+
+float* stdDevPtr = (float*) (beam_parameters_bytes+29);
 
 // ------ 2D-arrays containing circularly buffered parameter values of the last 16 cycles ----//
 
@@ -172,8 +171,10 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 
 /* Compute FWHM X and Y (based on variance in this case, assumes more or less gaussian profile */
 
-void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right)
+void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right,  uint16_t peak1_max, uint16_t peak2_max)
 {
+	
+	/* For a gaussian beam
 	
 	uint16_t mean[2] = {0,0};
 	long long summed=0;
@@ -197,7 +198,77 @@ void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left
 		summed+= (pow((i-mean[1]),2)*algorithm_buffer[i]);
 	}
 	variance=summed/sum(peak2_left,peak2_right);
-		fwhm[1][cycle] = (uint16_t)(sqrt(variance)*2.355);
+		fwhm[1][cycle] = (uint16_t)(sqrt(variance)*2.355); 
+		*/
+		
+	
+	/* In general, for all beam types, requires 2 extra arguments */
+		
+		
+		uint16_t half_max = algorithm_buffer[peak1_max]/2;
+		
+		uint16_t left_hm = 1000;
+		uint16_t left_hm_index = 0;
+		
+		for (uint16_t i = peak1_max; i > peak1_left; i--)
+		{
+			uint16_t gap = abs(algorithm_buffer[i] - half_max);
+			if (gap <= left_hm)
+			{
+				left_hm = gap;
+				left_hm_index = i;
+			}
+		}
+		
+		uint16_t right_hm = 1000;
+		uint16_t right_hm_index = 0;
+		
+		for (uint16_t i = peak1_max; i < peak1_right; i++)
+		{
+			uint16_t gap = abs(algorithm_buffer[i] - half_max);
+			if (gap <= right_hm)
+			{
+				right_hm = gap;
+				right_hm_index = i;
+			}
+		}
+		
+		fwhm[0][cycle] = right_hm_index - left_hm_index;
+		
+		half_max = algorithm_buffer[peak2_max]/2;
+		
+		left_hm = 1000;
+		left_hm_index = 0;
+		
+		for (uint16_t i = peak2_max; i > peak2_left; i--)
+		{
+			uint16_t gap = abs(algorithm_buffer[i] - half_max);
+			if (gap <= left_hm)
+			{
+				left_hm = gap;
+				left_hm_index = i;
+			}
+		}
+		
+		right_hm = 1000;
+		right_hm_index = 0;
+		
+		for (uint16_t i = peak2_max; i < peak2_right; i++)
+		{
+			uint16_t gap = abs(algorithm_buffer[i] - half_max);
+			if (gap <= right_hm)
+			{
+				right_hm = gap;
+				right_hm_index = i;
+				
+			}
+		}
+		
+		fwhm[1][cycle] = right_hm_index - left_hm_index;
+	
+	
+	
+	
 }
 
 
@@ -205,6 +276,7 @@ void compute_fwhm(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left
 
 void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right)
 {
+	
 	double first_peak_mean  =  sample_average(peak1_left, peak1_right);
 	double second_peak_mean =  sample_average(peak2_left, peak2_right);
 	
@@ -249,8 +321,72 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	third_central = third_central/denominator;
 	
 	skewness[1][cycle] = third_central;
-}
+	
+	
+} 
 
+/* Alternative method for skewness, employing Pearson's coefficient of skewness 
+
+   void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right, uint16_t peak1_max, uint16_t peak2_max)
+   {
+	   double first_peak_mean  =  sample_average(peak1_left, peak1_right);
+	   double second_peak_mean =  sample_average(peak2_left, peak2_right);
+	   
+	   uint16_t first_peak_median = 0;
+	   uint16_t half_intensity = beam_intensity[0][cycle]/2;
+	   uint32_t left_med = 0;
+
+	   for (uint16_t i=peak1_left;i<peak1_right;i++ )
+	   {
+		   left_med += algorithm_buffer[i];
+		   if(left_med >= half_intensity) 
+		   {
+			   first_peak_median = i;
+			   break;
+		   }
+	   }
+
+	   half_intensity = beam_intensity[1][cycle]/2;
+	   uint16_t second_peak_median = 0;
+	   uint32_t right_med = 0;
+	   
+	   for (uint16_t i=peak2_left;i<peak2_right;i++ )
+	   {
+		   right_med += algorithm_buffer[i];
+		   if(right_med >= half_intensity)
+		   {
+			   second_peak_median = i;
+			   break;
+		   }
+	   }
+	   
+	   // compute variance
+	   
+	   float first_peak_variance = 0;
+	   float second_peak_variance = 0;
+	   
+	   for (uint16_t i=peak1_left;i<peak1_right;i++ )
+	   {
+		   first_peak_variance += ((i-first_peak_mean)*(i-first_peak_mean)*algorithm_buffer[i]);
+	   }
+	   
+	   first_peak_variance = first_peak_variance/sum(peak1_left, peak1_right);
+	    
+	   for (uint16_t i=peak2_left;i<peak2_right;i++ )
+	   {
+		   second_peak_variance += ((i-second_peak_mean)*(i-second_peak_mean)*algorithm_buffer[i]);
+	   }
+	   
+	   second_peak_variance = second_peak_variance/sum(peak2_left,peak2_right);
+	   
+	   // compute Pearson's coefficient of skew
+	   
+	   skewness[0][cycle] = 3*(first_peak_mean - first_peak_median)/sqrt(first_peak_variance);
+	   skewness[1][cycle] = 3*(second_peak_mean - second_peak_median)/sqrt(second_peak_variance);
+	   
+	    
+   }
+*/
 
 
 
@@ -260,8 +396,9 @@ void compute_beam_parameters()
 {
 	detect_peaks(20);	// threshold of 20 (16 mv), might be made user-configurable later
 	compute_beam_intensity(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
-	compute_fwhm(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
+	compute_fwhm(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle], peak_location[0][cycle], peak_location[3][cycle]);
 	compute_skewness(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
+	//compute_skewness(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle], peak_location[0][cycle], peak_location[3][cycle]);
 	
 	cycle++;
 	if (cycle > 15) cycle = 0;
@@ -271,41 +408,7 @@ void compute_beam_parameters()
 
 void compute_avgd_parameters()
 {
-	/*
-	
-	// Double-based parameter array computations
-	
-	for (uint8_t i = 0; i< 14 ; i++) beam_parameters[i] = 0;
-	
-	for(uint8_t i = 0 ; i < 6; i++)
-	{
-		for (uint8_t j = 0; j < 16; j++) beam_parameters[i+1] += peak_location[i][j];
-		beam_parameters[i + 1] = (uint16_t) (beam_parameters[i+1] / 16);
-	}
-	
-	for(uint8_t i = 0 ; i < 2; i++)
-	{
-		for (uint8_t j = 0; j < 16; j++) beam_parameters[i+8] += beam_intensity[i][j];
-		beam_parameters[i + 8] = (uint32_t) (beam_parameters[i+8] / 16);
-	}
-	
-	
-	for(uint8_t i = 0 ; i < 2; i++)
-	{
-		for (uint8_t j = 0; j < 16; j++) beam_parameters[i+10] += fwhm[i][j];
-		beam_parameters[i + 10] = (uint16_t) (beam_parameters[i+10] / 16);
-	}
-	
-	for (uint8_t j = 0; j < 16; j++) beam_parameters[12] += skewness[0][j];
-	beam_parameters[12] = (float) (beam_parameters[12] / 16);
-	
-	for (uint8_t j = 0; j < 16; j++) beam_parameters[13] += skewness[1][j];
-	beam_parameters[13] = (float) (beam_parameters[13] / 16);
-	
-	*/
-	
-	
-	
+		
 	// Byte-based parameter array computations
 	
 	
@@ -325,6 +428,18 @@ void compute_avgd_parameters()
 	}
 	
 	*intensityPtr = (uint32_t)(average_intensity/32);
+	
+	
+	//peak variance
+	for(uint8_t i=0; i<4; i+=3){
+		peak_variance=0;
+		for(uint8_t j=0; j<16;j++) peak_variance+= (peak_location[i][j]-peakLocationPtr[i])*(peak_location[i][j]-peakLocationPtr[i]);
+		if(i==0){
+			stdDevPtr[0]= (float)sqrt(peak_variance/15);
+			}else{
+			stdDevPtr[1]= (float)sqrt(peak_variance/15);
+		}
+	}
 	
 	
 	

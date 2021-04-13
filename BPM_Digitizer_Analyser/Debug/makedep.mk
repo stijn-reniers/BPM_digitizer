@@ -6,6 +6,8 @@ src\Algorithms.c
 
 src\ASF\sam\drivers\pdc\pdc.c
 
+src\ASF\sam\drivers\rstc\rstc.c
+
 src\SerialCommunication_BPM.c
 
 src\ASF\common\services\clock\sam4e\sysclk.c

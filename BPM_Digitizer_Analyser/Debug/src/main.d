@@ -143,7 +143,7 @@ src/main.d src/main.o: ../src/main.c \
  ../src/ASF/common/services/ioport/ioport.h \
  ../src/ASF/common/services/ioport/sam/ioport_pio.h \
  ../src/ASF/sam/drivers/pdc/pdc.h ../src/ASF/sam/drivers/pmc/sleep.h \
- ../src/ASF/sam/utils/fpu/fpu.h \
+ ../src/ASF/sam/drivers/rstc/rstc.h ../src/ASF/sam/utils/fpu/fpu.h \
  ../src/ASF/sam/boards/sam4e_xplained_pro/led.h \
  ../src/ASF/common/services/sleepmgr/sam/sleepmgr.h \
  ../src/config/conf_sleepmgr.h \
@@ -457,6 +457,8 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\arm\arm-gnu-toolchain\arm-no
 ../src/ASF/sam/drivers/pdc/pdc.h:
 
 ../src/ASF/sam/drivers/pmc/sleep.h:
+
+../src/ASF/sam/drivers/rstc/rstc.h:
 
 ../src/ASF/sam/utils/fpu/fpu.h:
 

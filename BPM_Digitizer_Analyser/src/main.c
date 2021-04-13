@@ -173,6 +173,7 @@ static void configure_tc_trigger(void)
 }
 
 
+
 /* Configure a delay timer to create the desired phase offset configured by the operator */
 
 static void setDelayTimer(int delayFreq){
@@ -216,9 +217,7 @@ static void configure_afec(void)
 	
 	afec_start_calibration(AFEC0);
 	while((afec_get_interrupt_status(AFEC0) & AFEC_ISR_EOCAL) != AFEC_ISR_EOCAL);
-	
-	
-		
+
 }
 
 
