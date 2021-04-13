@@ -31,15 +31,15 @@ value1=max2;
 Value1Index=I2;
 value2=max2;
 Value2Index=I2;
-for i= 1:I1
+for i= 1:I2
     if(abs(peak2Data(i)-(max2/2))<abs(value1-(max2/2)))
-        value1= peak1Data(i);
+        value1= peak2Data(i);
         Value1Index= i;
     end
 end
-for i= I1:size(peak2Data,1)
+for i= I2:size(peak2Data,1)
     if(abs(peak2Data(i)-(max2/2))<abs(value2-(max2/2)))
-        value2= peak1Data(i);
+        value2= peak2Data(i);
         Value2Index= i;
     end
 end
