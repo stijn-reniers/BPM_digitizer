@@ -15,7 +15,7 @@
 #define BUFFER_SIZE_PLOTDATA	  16668					
 
 /* Pdc transfer buffer */
-uint8_t host_command[BUFFER_SIZE_HOST_COMMAND] = {0};
+uint8_t host_command[BUFFER_SIZE_HOST_COMMAND]={0};
 uint8_t config[5] = {0};
 
 /* PDC data packet for host computer commands */
@@ -117,7 +117,6 @@ void pdc_uart_initialization(void)
 	   We start the receive transfer, transmits are always started in response to a received command*/
 	pdc_enable_transfer(g_p_uart_pdc, PERIPH_PTCR_RXTEN | PERIPH_PTCR_TXTEN);
 	pdc_rx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);
-	
 	/* Enable UART IRQ for receive buffer full (host command received)*/
 	uart_enable_interrupt(CONSOLE_UART, UART_IER_RXBUFF);
 	
