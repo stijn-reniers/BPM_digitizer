@@ -458,7 +458,18 @@ void compute_avgd_parameters()
 		skewnessPtr[i]=  (float) (average_skewness/16);
 	}
 	
+}
+
+void dc_offset_compensation(){
 	
+	int dc_integral = 0;
 	
+	for (uint16_t i = half_cycle_length - 250; i < half_cycle_length + 250; i++)
+	{
+		dc_integral += (algorithm_buffer[i]-2048);
+	}
+	
+	uint16_t avg_dc_offset = dc_integral/500;
+	afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, 0x800 + avg_dc_offset);
 	
 }

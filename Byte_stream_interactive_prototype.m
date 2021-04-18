@@ -134,14 +134,14 @@ function request_plot(~, ~, serialport)
     % Read and display the echo message from microcontroller to see if command is
     % correctly received
     
-    echo = zeros(3,1);
-    for i = 1:3
-        echo(i) = read(serialport, 1, 'uint8');
-    end
+%     echo = zeros(3,1);
+%     for i = 1:3
+%         echo(i) = read(serialport, 1, 'uint8');
+%     end
     
-    disp(['SAM4E echoed the command for requesting plot :']);
-    disp(echo);
-    
+%     disp(['SAM4E echoed the command for requesting plot :']);
+%     disp(echo);
+%     
     % Read the plot data from microcontroller
     
     tic;
@@ -229,15 +229,15 @@ function request_params(~, ~, serialport)
     % Read and display the echo message from microcontroller to see if command is
     % correctly received
     
-    echo = zeros(3,1);
-    for i = 1:3
-        echo(i) = read(serialport, 1, 'uint8');
-    end
-    
-    
-    disp(['SAM4E echoed the command for requesting parameters :']);
-    disp(echo);
-    
+%     echo = zeros(3,1);
+%     for i = 1:3
+%         echo(i) = read(serialport, 1, 'uint8');
+%     end
+%     
+%     
+%     disp(['SAM4E echoed the command for requesting parameters :']);
+%     disp(echo);
+%     
         
     % Read the beam parameter plot data
    

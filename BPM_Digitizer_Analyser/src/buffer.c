@@ -23,9 +23,9 @@ uint16_t* transmit_buffer = buffer2;
 
 void addSampleCollector(uint16_t sample){
 	
-	if (bufferIndexCollector<buffersize)
+	if (bufferIndexCollector<buffersize )
 	{
-		afec_buffer_collector[bufferIndexCollector]= sample;
+		if (bufferIndexCollector !=0 && bufferIndexCollector != 8333) afec_buffer_collector[bufferIndexCollector]= sample;
 		bufferIndexCollector++;
 	}
 }
@@ -49,27 +49,14 @@ volatile void switchBuffer(void){
 	{
 		buffersFilled=0; 
 		swap(&algorithm_buffer, &transmit_buffer);
+		
+		
 	} 
 	
-	bufferIndexCollector=0;
-	
-	
 	swap(&afec_buffer_collector, &algorithm_buffer);
-	
-	/*
-		buffersFilled++;
-		if (buffersFilled<32)
-		{
-			swap(&algorithm_buffer, &transmit_buffer);
-			swap(&afec_buffer_collector, &algorithm_buffer);
-		}
 		
-		bufferIndexCollector= 0;
+	bufferIndexCollector=0;
 		
-		if (buffersFilled>32) buffersFilled = 32;
-			
-	*/
-	
 }
 
 /* Fills possible gap at the end of the signal buffer with zeros, and performs the buffer pointer switch */
@@ -84,8 +71,20 @@ void cycleEnded(void){
 		}
 	} 
 	
+	
 	switchBuffer();
 }
 
 
 
+void setDelimiters(void)
+{
+	buffer0[0] = 144;
+	buffer0[8333] = 33;
+		
+	buffer1[0] = 144;
+	buffer1[8333] = 33;
+	
+	buffer2[0] = 144;
+	buffer2[8333] = 33;
+}

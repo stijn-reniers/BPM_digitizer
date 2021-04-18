@@ -5,7 +5,15 @@ load('Measurements2.mat');
 %Plotting the time spectra
 
 first_spectrum = fwhm_data(1:8334);
-plot(first_spectrum);
+area(1835:2089,first_spectrum(1835:2089), 'FaceColor', 'Red', 'Edgecolor', 'none');
+text(2090, 2000, 'IntX', 'Color', 'Red');
+hold on
+area(5937:6161,first_spectrum(5937:6161), 'FaceColor', 'Blue');
+text(6200, 2000, 'IntY', 'Color', 'Blue')
+hold on
+plot(first_spectrum, 'Color', 'Black');
+hold off
+
 figure
 second_spectrum = fwhm_data(8335:16668);            % 9607-10755 and 14407-14787
 %plot(second_spectrum);
@@ -58,7 +66,7 @@ ninth_spectrum = (fwhm_data(66672:75006));
 %% Second spectrum
 
 peak = fwhm_data(5950:6160);
-plot(peak);
+%plot(peak);
 
 data = [];
 for i = 5950:6160

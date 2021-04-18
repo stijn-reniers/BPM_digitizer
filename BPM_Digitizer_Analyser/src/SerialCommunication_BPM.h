@@ -15,6 +15,7 @@
 
 uint8_t config[5];
 
+
 void pdc_uart_initialization(void);
 
 void configure_UART(void);

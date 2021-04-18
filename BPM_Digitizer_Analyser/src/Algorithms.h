@@ -69,6 +69,12 @@ void compute_beam_parameters(void);
 
 void compute_avgd_parameters(void);
 
+/* Detect and adjust the DC-offset of the collector signal automatically */
+
+void dc_offset_compensation(void);
+
+
+
 
 #endif /* ALGORITHMS_H_ */
 

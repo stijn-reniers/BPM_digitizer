@@ -50,8 +50,12 @@ void configure_UART(void)
 
 void send_cycle_plot()
 {	
+	setDelimiters();
+	transmit_buffer[0] = 144;
+	transmit_buffer[8333] = 33;
 	pdc_tx_init(g_p_uart_pdc, &cycle_plot_packet, NULL);
-	config[3] = 0;																		// reset the plotting data flag in configuration array
+	config[3] = 0;														// reset the plotting data flag in configuration array
+																		
 }
 
 
