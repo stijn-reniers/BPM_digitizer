@@ -10,9 +10,9 @@ uint8_t beam_parameters_bytes[38] = {0};
 uint16_t* peakLocationPtr = (uint16_t*) (beam_parameters_bytes+1);
 uint32_t* intensityPtr = (uint32_t*)(beam_parameters_bytes+13);
 uint16_t* fwhmPtr = (uint16_t*)(beam_parameters_bytes+17);
-float* skewnessPtr = (float*)(beam_parameters_bytes+21);
+int32_t* skewnessPtr = (int32_t*)(beam_parameters_bytes+21);
 
-float* stdDevPtr = (float*) (beam_parameters_bytes+29);
+int32_t* stdDevPtr = (int32_t*) (beam_parameters_bytes+29);
 
 // ------ 2D-arrays containing circularly buffered parameter values of the last 16 cycles ----//
 
@@ -435,9 +435,9 @@ void compute_avgd_parameters()
 		peak_variance=0;
 		for(uint8_t j=0; j<16;j++) peak_variance+= (peak_location[i][j]-peakLocationPtr[i])*(peak_location[i][j]-peakLocationPtr[i]);
 		if(i==0){
-			stdDevPtr[0]= (float)sqrt(peak_variance/15);
+			stdDevPtr[0]= (int32_t)(sqrt(peak_variance/15)*10000);
 			}else{
-			stdDevPtr[1]= (float)sqrt(peak_variance/15);
+			stdDevPtr[1]= (int32_t)(sqrt(peak_variance/15)*10000);
 		}
 	}
 	
@@ -455,7 +455,7 @@ void compute_avgd_parameters()
 	{
 		average_skewness = 0;
 		for (uint8_t j = 0; j < 16; j++) average_skewness += skewness[i][j];
-		skewnessPtr[i]=  (float) (average_skewness/16);
+		skewnessPtr[i]=  (int32_t) ((average_skewness/16)*10000);
 	}
 	
 }
