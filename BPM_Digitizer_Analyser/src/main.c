@@ -303,7 +303,7 @@ int main (void)
 			ioport_set_pin_level(delayPin,LED0_ACTIVE_LEVEL);
 		}else{
 			ioport_set_pin_level(delayPin,LED0_INACTIVE_LEVEL);
-			//rstc_start_software_reset(RSTC);
+			rstc_start_software_reset(RSTC);
 		}
 		updateDelayCounter();
 	}

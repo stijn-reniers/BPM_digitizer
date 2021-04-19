@@ -65,7 +65,7 @@ void requestParameters() {
     RS232_SendByte(cport_nr, 2);
     RS232_SendByte(cport_nr, 255);
     std::this_thread::sleep_for(std::chrono::microseconds(10));
-    RS232_PollComport(cport_nr, buf, 3);
+    //RS232_PollComport(cport_nr, buf, 3);
     recieveData();
 }
 //updates trigger level
