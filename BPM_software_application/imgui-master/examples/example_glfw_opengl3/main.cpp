@@ -1,8 +1,3 @@
-// Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -14,7 +9,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
-#include "BPM_Reader.h"
+#include "BpmRs232Manager.h"
 #define plotSize 8334
 
 // About Desktop OpenGL function loaders:
@@ -56,14 +51,15 @@ using namespace gl;
 
 
 int bdrate = 115200;
-uint16_t data, plotMax;
-char mode[] = { '8','N','1',0 };
+uint16_t plotMax;
 float plotF[plotSize];
+int beamPositionOrder[6] = { 1,4,0,3,2,5 };
 int triggerLevel = 0;
 int triggerDelay = 0;
 uint16_t* plot;
-char titleParameters[6][40] = { "Peak left edge" , "Peak centre" , "Peak right edge", "Beam intensity","Beam FWHM","Beam skewness" };
-std::string ecchoMessage = "";
+char titleParameters[7][40] = { "Peak left edge" , "Peak centre" , "Peak right edge","Peak deviation", "Beam intensity","Beam FWHM","Beam skewness" };
+int plotUpdateFreq=10;
+std::string message;
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -144,21 +140,18 @@ int main(int, char**)
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-   
 
+    BpmCommunicationManager* comManager = new BpmRs232Manager();
     // Open COM connection and start thread
-    if (RS232_OpenComport(cport_nr, bdrate, mode, 0))
-    {
-        printf("Can not open comport\n");
-
-        return(0);
+    if (!comManager->setupCommunication()) {
+        return 0;
     }
-    RS232_flushRXTX(3);
-    std::thread thread_obj(requestData,ecchoMessage);
+
+    std::thread communicator(&BpmCommunicationManager::requestData,comManager);
 
     // Main loop
     while (!glfwWindowShouldClose(window))
-    {        
+    {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
@@ -175,78 +168,108 @@ int main(int, char**)
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        // parameter display in table
         {
             static float f = 0.0f;
             static int counter = 0;
-            ImVec2 size{ 1960,1080 };
+            ImVec2 size{ 1800,900 };
             static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-            ImGui::Begin("BPM monitor");                          // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("BPM monitor");
             ImGui::SetWindowSize(size);
-            if (ImGui::BeginTable("Parameters", 3,flags)) {
+            if (ImGui::BeginTable("Parameters", 3, flags)) {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::TableNextColumn();
                 ImGui::TableHeader("X crossection");
                 ImGui::TableNextColumn();
                 ImGui::TableHeader("Y crossection");
-                double* parameter = getParameters();
-                for (int row = 0; row < 6; row++)
-                {                   
+                uint16_t* positions = comManager->getBeamLocation();
+                for (int row = 0; row < 3; row++) {
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
                     ImGui::Text(titleParameters[row]);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%f",parameter[(2*row)]);
+                    ImGui::Text("%u", positions[beamPositionOrder[2 * row]]);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%f",parameter[(2*row)+1]);
+                    ImGui::Text("%u", positions[beamPositionOrder[(2 * row) + 1]]);
                 }
-                
+                //deviation
+                float* stdeviation = comManager->getDeviation();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[3]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f", stdeviation[0]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f", stdeviation[1]);
+                //Intensity
+                uint32_t* intensity = comManager->getIntensity();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[4]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%u", *intensity);
+                //FWHM
+                uint16_t* FWHM = comManager->getFwhm();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[5]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%u", FWHM[0]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%u", FWHM[1]);
+                //skewness
+                float* skewness = comManager->getSkewness();
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(titleParameters[6]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f", skewness[0]);
+                ImGui::TableNextColumn();
+                ImGui::Text("%f", skewness[1]);
                 ImGui::EndTable();
             }
-           
+            // collector plot display
             {
-                if (getNewPlotData()) {
+                if (comManager->newPlotDataAvailable()) {
                     plotMax = 0;
-                    plot = getPlot();
+                    plot = comManager->getPlot();
                     for (int i = 0;i < plotSize; i++) {
                         plotF[i] = plot[i];
                         if (plotF[i] > plotMax) {
                             plotMax = plotF[i];
                         }
                     }
-                    setNewPlotData(false); 
+                    comManager->setPlotDataAvailable(false);
                 }
-                ImGui::PlotLines("Lines", plotF, 8334,0,0,0,plotMax+100, ImVec2(1800, 600));
+                ImGui::PlotLines("Lines", plotF, 8334, 0, 0, 0, plotMax + 100, ImVec2(1800, 600));
             }
-            ImGui::InputInt("Trigger level", &triggerLevel);
-            ImGui::SameLine();
-            if (ImGui::Button("Update level")) {
-                if (triggerLevel > 255) {
-                    triggerLevel = 255;
-                }
-                if (triggerLevel < 0) {
-                    triggerLevel = 0;
-                }
-                updateTriggerLevel(triggerLevel);
-            }
-            ImGui::InputInt("Trigger Delay",&triggerDelay);
+
+            //Plot update frequency slider 
+            ImGui::Text("Seconds between plot update");
+            ImGui::SliderInt("plot update freq", &plotUpdateFreq, 1, 60);
+            comManager->setPlotUpdateFrequency(plotUpdateFreq);
+
+            // trigger delay update field
+            ImGui::InputInt("Trigger Delay", &triggerDelay);
             ImGui::SameLine();
             if (ImGui::Button("Update Delay")) {
-                if (triggerDelay>33) {
+                if (triggerDelay > 33) {
                     triggerDelay = 33;
                 }
                 if (triggerDelay < 0) {
                     triggerDelay = 0;
                 }
-                updateTriggerDelay(triggerDelay);
+                comManager->updateTriggerDelay(triggerDelay);
             }
-            ImGui::Text(ecchoMessage.c_str());
+
+            // extra text
+            message = comManager->getEcchoMessage();
+            ImGui::Text(message.c_str());
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
 
-        
 
         // Rendering
         ImGui::Render();
@@ -260,9 +283,10 @@ int main(int, char**)
         glfwSwapBuffers(window);
     }
     // Cleanup
-    setRunning(false);
-    thread_obj.join();
-    RS232_CloseComport(3);
+    comManager->setRunning(false);
+    communicator.join();
+    comManager->cleanUpCommunication();
+    delete comManager;
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -271,6 +295,3 @@ int main(int, char**)
 
     return 0;
 }
-
-
-

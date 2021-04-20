@@ -14,6 +14,9 @@
     <Filter Include="sources\imGuiResources">
       <UniqueIdentifier>{1b041141-c4bc-4edd-bb7c-cc4b3f59f99a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="sources\lib">
+      <UniqueIdentifier>{1d520e9c-f9ef-4bd5-a373-000b5e9d4d61}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -37,12 +40,6 @@
     <ClCompile Include="..\..\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="rs232.c">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="BPM_Reader.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
     <ClCompile Include="BpmHttpManager.cpp">
       <Filter>sources</Filter>
     </ClCompile>
@@ -51,6 +48,12 @@
     </ClCompile>
     <ClCompile Include="..\..\backends\imgui_impl_opengl3.cpp">
       <Filter>sources\imGuiResources</Filter>
+    </ClCompile>
+    <ClCompile Include="BpmRs232Manager.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="rs232.c">
+      <Filter>sources\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -69,16 +72,9 @@
     <ClInclude Include="..\..\imgui_internal.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="rs232.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="BPM_Reader.h">
-      <Filter>sources</Filter>
-    </ClInclude>
     <ClInclude Include="BpmCommunicationManager.h">
       <Filter>sources</Filter>
     </ClInclude>
-    <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="BpmHttpManager.h">
       <Filter>sources</Filter>
     </ClInclude>
@@ -87,6 +83,15 @@
     </ClInclude>
     <ClInclude Include="..\..\backends\imgui_impl_opengl3.h">
       <Filter>sources\imGuiResources</Filter>
+    </ClInclude>
+    <ClInclude Include="BpmRs232Manager.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="nlohmann\json.hpp">
+      <Filter>sources\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="rs232.h">
+      <Filter>sources\lib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

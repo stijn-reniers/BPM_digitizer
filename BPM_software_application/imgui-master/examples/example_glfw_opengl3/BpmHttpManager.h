@@ -8,16 +8,20 @@ using json = nlohmann::json;
 class BpmHttpManager :public BpmCommunicationManager
 {
 public:
+
     // Inherited via BpmCommunicationManager
-    virtual void setupCommunication() override;
+    virtual bool setupCommunication() override;
     virtual void requestData() override;
     virtual void cleanUpCommunication() override;
 
     // Communication dependent functions
-    void requestParameters();
-    void requstPlot();
+    void requestPlot();
     void parameterPost(bool activate);
     void parameterGet();
+    void plotGet();
+    void plotPost(bool activate);
+    void jsonParseParameters();
+    void jsonParsePlot();
 private:
     json j;
     CURL* curl;
@@ -26,3 +30,6 @@ private:
     
 };
 
+
+std::size_t getParameterCallback(const char* in, std::size_t size, std::size_t num, json* out);
+std::size_t getPlotCallback(const char* in, std::size_t size, std::size_t num, json* out);
