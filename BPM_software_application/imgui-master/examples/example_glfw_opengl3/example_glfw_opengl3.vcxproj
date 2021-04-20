@@ -166,6 +166,7 @@
     <ClCompile Include="..\..\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\..\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\libs\gl3w\GL\gl3w.c" />
+    <ClCompile Include="BpmHttpManager.cpp" />
     <ClCompile Include="BPM_Reader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rs232.c" />
@@ -178,7 +179,10 @@
     <ClInclude Include="..\..\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\libs\gl3w\GL\gl3w.h" />
     <ClInclude Include="..\libs\gl3w\GL\glcorearb.h" />
+    <ClInclude Include="BpmCommunicationManager.h" />
+    <ClInclude Include="BpmHttpManager.h" />
     <ClInclude Include="BPM_Reader.h" />
+    <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="rs232.h" />
   </ItemGroup>
   <ItemGroup>
