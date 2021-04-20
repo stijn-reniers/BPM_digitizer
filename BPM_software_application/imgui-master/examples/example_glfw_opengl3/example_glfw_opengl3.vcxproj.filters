@@ -11,6 +11,9 @@
     <Filter Include="gl3w">
       <UniqueIdentifier>{42f99867-3108-43b8-99d0-fabefaf1f2e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="sources\imGuiResources">
+      <UniqueIdentifier>{1b041141-c4bc-4edd-bb7c-cc4b3f59f99a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -34,17 +37,20 @@
     <ClCompile Include="..\..\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\backends\imgui_impl_glfw.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\backends\imgui_impl_opengl3.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
     <ClCompile Include="rs232.c">
       <Filter>sources</Filter>
     </ClCompile>
     <ClCompile Include="BPM_Reader.cpp">
       <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="BpmHttpManager.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\backends\imgui_impl_glfw.cpp">
+      <Filter>sources\imGuiResources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\backends\imgui_impl_opengl3.cpp">
+      <Filter>sources\imGuiResources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -63,23 +69,30 @@
     <ClInclude Include="..\..\imgui_internal.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\backends\imgui_impl_opengl3.h">
-      <Filter>sources</Filter>
-    </ClInclude>
     <ClInclude Include="rs232.h">
       <Filter>sources</Filter>
     </ClInclude>
     <ClInclude Include="BPM_Reader.h">
       <Filter>sources</Filter>
     </ClInclude>
+    <ClInclude Include="BpmCommunicationManager.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="nlohmann\json.hpp" />
+    <ClInclude Include="BpmHttpManager.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
+      <Filter>sources\imGuiResources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\backends\imgui_impl_opengl3.h">
+      <Filter>sources\imGuiResources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />
     <None Include="..\..\misc\natvis\imgui.natvis">
-      <Filter>sources</Filter>
+      <Filter>sources\imGuiResources</Filter>
     </None>
   </ItemGroup>
 </Project>
