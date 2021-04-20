@@ -22,7 +22,7 @@ global beam_location_temp;
 global beam_intensity_temp;
 global beam_fwhm_temp;
 global beam_skewness_temp;
-global fwhm_data;
+global fwhm_data_2;
 
 global h;                           % global parameter to store beam parameter update text, deleted at every update
 
@@ -116,7 +116,7 @@ title('Beam skewness');
 
 function request_plot(~, ~, serialport)
 
-    global fwhm_data;
+    global fwhm_data_2;
     global beam_location;                         % Refer to the global parameter vector
     global instant_vis;
     set(0,'CurrentFigure',instant_vis);
@@ -148,7 +148,7 @@ function request_plot(~, ~, serialport)
             plot_data = read(serialport,8334,'uint16');
     toc; 
     
-    
+    fwhm_data_2 = plot_data;
    
     % Plot the data as a single sweep
     
@@ -245,8 +245,8 @@ function request_params(~, ~, serialport)
     beam_location(1:6) = read(serialport,6,'uint16')
     beam_intensity = read(serialport, 1, 'uint32')
     beam_fwhm = read(serialport, 2, 'uint16')
-    beam_skewness = read(serialport, 2, 'single')
-    beam_location_variance = read(serialport, 2, 'single')
+    beam_skewness = read(serialport, 2, 'int32')/10000
+    beam_location_variance = read(serialport, 2, 'int32')/10000
     z = read(serialport,1,'uint8')
    
 

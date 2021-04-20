@@ -26,6 +26,8 @@
 /** ------------------------------------------------------------------------------------ */
 
 #define delayPin LED0_GPIO
+#define delayOutput IOPORT_CREATE_PIN(PIOA, 24)
+#define resetButton IOPORT_CREATE_PIN(PIOA, 25)
 
 /** Reference voltage for AFEC in mv. */
 #define VOLT_REF			   (3300)
@@ -60,12 +62,15 @@ volatile bool fullBuffer=false;
 
 uint8_t triggerOffset = 0;
 
+int delayCounter=0;
+
 
 /** ------------------------------------------------------------------------------------ */
 /**   Function prototypes																 */
 /** ------------------------------------------------------------------------------------ */
 
 static void setDelayTimer(int delayFreq);
+void updateDelayCounter();
 
 
 /**
@@ -76,7 +81,7 @@ static void setDelayTimer(int delayFreq);
 void ACC_Handler(void)
 {
 	triggerOffset = config[0];												// Obtain the trigger offset from configuration array
-	if (triggerOffset > 67) triggerOffset = 67;								// Set trigger offset to 67 if larger (upper limit of one cycle)
+	if (triggerOffset > 60) triggerOffset = 60;								// Set trigger offset to 67 if larger (upper limit of one cycle)
 	
 	uint32_t ul_status;
 	ul_status = acc_get_interrupt_status(ACC);								
@@ -91,12 +96,14 @@ void ACC_Handler(void)
 			if(!triggered)
 			{
 				triggered= true;											
-				fullBuffer=true;											
+															
 				
 				if(triggerOffset == 0)
 				{
+					fullBuffer=true;
 					tc_start(TC0,0);
 					cycleEnded();											// performs the buffer pointer switch 
+					ioport_set_pin_level(delayOutput, IOPORT_PIN_LEVEL_HIGH);
 				}
 				
 				else														
@@ -125,13 +132,14 @@ void ACC_Handler(void)
 void TC1_Handler(void){
 	
 	ioport_set_pin_level(delayPin,LED0_INACTIVE_LEVEL);
+	ioport_set_pin_level(delayOutput, IOPORT_PIN_LEVEL_HIGH);
 	
 	NVIC_DisableIRQ(TC1_IRQn);
 	NVIC_ClearPendingIRQ(TC1_IRQn);
 	tc_disable_interrupt(TC0, 1, TC_IER_CPCS);
 	tc_stop(TC0,1);
 	
-	
+	fullBuffer=true;
 	cycleEnded();
 	tc_start(TC0,0);
 	
@@ -144,6 +152,7 @@ static void collector_data_ready(void)
 {
 	collector_sample_data = afec_get_latest_value(AFEC0);										// Obtain latest sample from COLLECTOR signal (EXT3 - pin4 (ch6))
 	addSampleCollector(collector_sample_data);													// Add the sample to the collector signal buffer
+	updateDelayCounter();
 }
 
 
@@ -235,6 +244,27 @@ static void configureDACC(void){
 	dacc_write_conversion_data(DACC, 3100);
 }
 
+
+
+void updateDelayCounter(){
+	if (ioport_get_pin_level(delayOutput)==IOPORT_PIN_LEVEL_HIGH)
+	{
+		if (delayCounter>=100)
+		{
+		    delayCounter=0;
+			ioport_set_pin_level(delayOutput,IOPORT_PIN_LEVEL_LOW);
+		}
+		else
+		{
+			delayCounter++;
+		}
+	}
+	else
+	{
+		delayCounter=0;
+	}
+}
+
 /* Main entry point of the application */
 
 int main (void)
@@ -246,7 +276,17 @@ int main (void)
 	pdc_uart_initialization();
 	configure_afec();
 	configureDACC();
+	
 	ioport_set_pin_dir(delayPin,IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(delayOutput, IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(resetButton, IOPORT_DIR_INPUT);
+	
+	ioport_set_pin_level(delayOutput,IOPORT_PIN_LEVEL_LOW);
+	ioport_set_pin_mode(resetButton,IOPORT_MODE_PULLUP|IOPORT_MODE_DEBOUNCE);
+	ioport_set_pin_sense_mode(resetButton, IOPORT_SENSE_RISING);
+	
+	ioport_set_pin_dir(delayPin,IOPORT_DIR_OUTPUT);
+	
 	pmc_enable_periph_clk(ID_ACC);
 	acc_init(ACC, ACC_MR_SELPLUS_AD7, ACC_MR_SELMINUS_DAC0,			// set pin AFEC1 AD1 (EXT1 pin 4) as + comparator and DAC channel 0 as -
 	ACC_MR_EDGETYP_ANY, ACC_MR_INV_DIS);
@@ -270,6 +310,10 @@ int main (void)
 			else if (config[3]!= 0) send_cycle_plot();
 		}
 		
+		
+		if(ioport_get_pin_level(resetButton)!=IOPORT_PIN_LEVEL_HIGH){
+			rstc_start_software_reset(RSTC);
+		}
 	}
 	
 	afec_disable_interrupt(AFEC0, AFEC_INTERRUPT_ALL);

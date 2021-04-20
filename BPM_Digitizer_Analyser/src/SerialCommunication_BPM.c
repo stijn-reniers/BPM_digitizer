@@ -89,9 +89,7 @@ void console_uart_irq_handler(void)
 			config[command_index] = host_command[2];								// third element is the new value of the specified setting
 		}
 		
-		//if (command_index == 1) dacc_write_conversion_data(DACC, config[1]*16);		// change trigger level immediately
-		if (command_index == 1) afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, 2048-config[1]);
-		//pdc_tx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);						// This transfer echoes the received packet that caused this interrupt, so computer application can check if command is correctly received (only for debugging)
+		//if (command_index == 0) pdc_tx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);						// This transfer echoes the received packet that caused this interrupt, so computer application can check if command is correctly received (only for debugging)
 	}
 	
 	
