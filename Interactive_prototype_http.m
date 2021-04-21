@@ -1,4 +1,4 @@
-s = struct('request_id', "1", 'get_beam_params', true);
+s = struct('request_id', "1", 'get_plot_data', true);
 body = matlab.net.http.MessageBody(jsonencode(s));
 body.show;
 
@@ -15,9 +15,9 @@ ask_for_parameters = matlab.net.http.RequestMessage(post, header, body);
 retrieve_parameters = matlab.net.http.RequestMessage(get, header);
 show(ask_for_parameters);
 
-[response, completedrequest, history] = send(ask_for_parameters, 'http://localhost:80/api/latest');
+%[response, completedrequest, history] = send(ask_for_parameters, 'http://localhost:80/api/latest');
 stat=response.StatusCode
-%  [response, completedrequest, history] = send(retrieve_parameters, 'http://localhost:80/api/latest');
+  [response, completedrequest, history] = send(retrieve_parameters, 'http://localhost:80/api/latest');
 %  show(retrieve_parameters);
 %  response.StatusCode
 
