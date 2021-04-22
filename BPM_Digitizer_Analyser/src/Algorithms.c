@@ -7,12 +7,12 @@ uint16_t half_cycle_length = (buffersize-1)>>1;
 // Array consists of 1 start byte - 28 data bytes - 1 stop byte
 
 uint8_t beam_parameters_bytes[38] = {0};
-uint16_t* peakLocationPtr = (uint16_t*) (beam_parameters_bytes+1);
-uint32_t* intensityPtr = (uint32_t*)(beam_parameters_bytes+13);
-uint16_t* fwhmPtr = (uint16_t*)(beam_parameters_bytes+17);
-int32_t* skewnessPtr = (int32_t*)(beam_parameters_bytes+21);
+uint16_t* peakLocationPtr = (uint16_t*) (beam_parameters_bytes+2);
+uint32_t* intensityPtr = (uint32_t*)(beam_parameters_bytes+14);
+uint16_t* fwhmPtr = (uint16_t*)(beam_parameters_bytes+18);
+int32_t* skewnessPtr = (int32_t*)(beam_parameters_bytes+22);
 
-int32_t* stdDevPtr = (int32_t*) (beam_parameters_bytes+29);
+int32_t* stdDevPtr = (int32_t*) (beam_parameters_bytes+30);
 
 // ------ 2D-arrays containing circularly buffered parameter values of the last 16 cycles ----//
 

@@ -14,6 +14,7 @@
 #define BUFFER_SIZE_PARAMETERS	  38				// change to 112 for double-based transmission
 #define BUFFER_SIZE_PLOTDATA	  16668					
 
+uint16_t size_indicator = BUFFER_SIZE_PLOTDATA + 2;
 /* Pdc transfer buffer */
 uint8_t host_command[BUFFER_SIZE_HOST_COMMAND] = {0};
 uint8_t config[5] = {0};
@@ -50,12 +51,10 @@ void configure_UART(void)
 
 void send_cycle_plot()
 {	
-	setDelimiters();
-	transmit_buffer[0] = 144;
-	transmit_buffer[8333] = 33;
+	usart_serial_write_packet(UART0, &size_indicator, 2);
 	pdc_tx_init(g_p_uart_pdc, &cycle_plot_packet, NULL);
 	config[3] = 0;														// reset the plotting data flag in configuration array
-																		
+																	
 }
 
 
@@ -64,8 +63,9 @@ void send_cycle_plot()
 void send_beam_parameters()
 {
 	compute_avgd_parameters();
-	beam_parameters_bytes[0] = 111;
-	beam_parameters_bytes[37] = 222;
+	//uint16_t size_indicator = BUFFER_SIZE_PARAMETERS;
+	beam_parameters_bytes[0] = BUFFER_SIZE_PARAMETERS & 0xff;
+	beam_parameters_bytes[1] = (BUFFER_SIZE_PARAMETERS << 8) & 0xff00;
 	pdc_tx_init(g_p_uart_pdc, &beam_parameters_packet, NULL);
 	config[2] = 0;																		// reset parameter data flag in configuration array
 }

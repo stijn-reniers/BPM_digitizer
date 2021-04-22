@@ -29,6 +29,4 @@ void cycleEnded(void);
 
 uint16_t getbuffersFilled(void);
 
-void setDelimiters(void);
-
 #endif /* BUFFER_H_ */

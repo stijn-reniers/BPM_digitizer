@@ -25,7 +25,7 @@ void addSampleCollector(uint16_t sample){
 	
 	if (bufferIndexCollector<buffersize )
 	{
-		if (bufferIndexCollector !=0 && bufferIndexCollector != 8333) afec_buffer_collector[bufferIndexCollector]= sample;
+		afec_buffer_collector[bufferIndexCollector]= sample;
 		bufferIndexCollector++;
 	}
 }
@@ -76,15 +76,3 @@ void cycleEnded(void){
 }
 
 
-
-void setDelimiters(void)
-{
-	buffer0[0] = 144;
-	buffer0[8333] = 33;
-		
-	buffer1[0] = 144;
-	buffer1[8333] = 33;
-	
-	buffer2[0] = 144;
-	buffer2[8333] = 33;
-}
