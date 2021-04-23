@@ -14,7 +14,7 @@
 	**/
 
 uint8_t config[5];
-
+uint8_t echo[5];
 
 void pdc_uart_initialization(void);
 

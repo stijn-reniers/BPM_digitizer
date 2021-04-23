@@ -30,7 +30,7 @@ private:
     CURL* curl;
     CURLcode res;
     std::string result;
-    
+    bool updateEchoMessage = false;
 };
 
 

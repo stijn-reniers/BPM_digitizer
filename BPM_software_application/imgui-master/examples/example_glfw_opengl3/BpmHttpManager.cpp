@@ -17,20 +17,21 @@ void BpmHttpManager::requestData()
 {
     int counter = 0;
     while (running) {
-
+        if (newTriggerDelay) {
+            ecchoMessage = "trigger delay update send";
+            triggerDelayPost();
+            newTriggerDelay = false;
+            updateEchoMessage = true;
+        }
         if (counter > plotUpdateFrequency) {
             requestPlot();
             counter = 0;
         }
         else {
             parameterGet();
-            ecchoMessage = "Plot updated";
+            //ecchoMessage = "Plot updated";
         }
-        if (newTriggerDelay) {
-            ecchoMessage = "trigger delay update send";
-            triggerDelayPost();
-            newTriggerDelay = false;
-        }
+        
         counter++;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -117,7 +118,14 @@ void BpmHttpManager::jsonParseParameters()
     intensity = *j.find("beam_intensity");
     fwhm[0] = *j.find("fwhm_x");
     fwhm[1] = *j.find("fwhm_y");
-
+    if (updateEchoMessage) {
+        std::cout << "entered" << std::endl;
+        int delay = *j.find("trigger_delay");
+        ecchoMessage = "echo recieved, trigger delay is now ";
+        ecchoMessage.append(std::to_string(delay));
+        ecchoMessage.append(" ms");
+        updateEchoMessage = false;
+    }
 }
 
 void BpmHttpManager::jsonParsePlot()

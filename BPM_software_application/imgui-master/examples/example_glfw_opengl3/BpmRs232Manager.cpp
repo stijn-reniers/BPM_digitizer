@@ -108,7 +108,7 @@ void BpmRs232Manager::changeTriggerDelay()
 
     std::this_thread::sleep_for(std::chrono::microseconds(10));
     //recieve eccho
-    RS232_PollComport(cport_nr, buf, 3);
+    RS232_PollComport(cport_nr, buf, 2);
     std::cout << "eccho received" << std::endl;
     for (int i = 0;i < 3;i++) {
         std::cout << +buf[i] << std::endl;

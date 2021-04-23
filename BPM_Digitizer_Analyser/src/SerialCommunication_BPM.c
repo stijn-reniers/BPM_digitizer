@@ -13,7 +13,7 @@
 #define BUFFER_SIZE_HOST_COMMAND  3	
 #define BUFFER_SIZE_PARAMETERS	  38				// change to 112 for double-based transmission
 #define BUFFER_SIZE_PLOTDATA	  16668					
-
+#define BUFFER_SIZE_ECHO		  5
 uint16_t size_indicator = BUFFER_SIZE_PLOTDATA + 2;
 /* Pdc transfer buffer */
 uint8_t host_command[BUFFER_SIZE_HOST_COMMAND] = {0};
@@ -26,7 +26,10 @@ pdc_packet_t g_pdc_uart_packet;
 pdc_packet_t beam_parameters_packet;											
 
 /* PDC data packet for transmitting beam_parameters */
-pdc_packet_t cycle_plot_packet;												
+pdc_packet_t cycle_plot_packet;			
+									
+/* PDC data packet for echoing settings changes */
+pdc_packet_t echo_packet;
 
 /* Pointer to UART PDC register base (collection of peripheral hardware registers)*/
 Pdc *g_p_uart_pdc;
@@ -87,6 +90,15 @@ void console_uart_irq_handler(void)
 		{
 			command_index= host_command[1];											// second element of host command contains index in configuration array (indicates which setting to change)
 			config[command_index] = host_command[2];								// third element is the new value of the specified setting
+			if(command_index!= 2 && command_index!= 3){
+				echo[0] = BUFFER_SIZE_ECHO & 0xff;
+				echo[1] = (BUFFER_SIZE_ECHO << 8) & 0xff00;
+				for (int i=0;i<3;i++)
+				{
+					echo[i+2]=host_command[i];
+				}
+				pdc_tx_init(g_p_uart_pdc, &echo_packet, NULL);
+			}
 		}
 		
 		//if (command_index == 0) pdc_tx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);						// This transfer echoes the received packet that caused this interrupt, so computer application can check if command is correctly received (only for debugging)
@@ -113,6 +125,9 @@ void pdc_uart_initialization(void)
 	
 	cycle_plot_packet.ul_addr = (uint32_t) transmit_buffer;					// start address of transfer packet data is the buffer we defined ourselves
 	cycle_plot_packet.ul_size = BUFFER_SIZE_PLOTDATA;
+	
+	echo_packet.ul_addr = (uint32_t) echo;
+	echo_packet.ul_size = BUFFER_SIZE_ECHO;
 	
 	/* Enable PDC transfers, here we set both transmitter and receiver high (full duplex). Receiver and transmitter hardware operate independently. 
 	   We start the receive transfer, transmits are always started in response to a received command*/
