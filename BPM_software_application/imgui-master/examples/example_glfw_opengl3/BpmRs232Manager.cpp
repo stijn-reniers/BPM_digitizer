@@ -27,6 +27,7 @@ void BpmRs232Manager::requestData()
             counter = 0;
         }
         counter++;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
     
@@ -43,31 +44,35 @@ void BpmRs232Manager::requestParameters()
     RS232_SendByte(cport_nr, 2);
     RS232_SendByte(cport_nr, 255);
     std::this_thread::sleep_for(std::chrono::microseconds(10));
-    RS232_PollComport(cport_nr, buf, 3);
-    recieveParameters();
+    RS232_PollComport(cport_nr, buf, 2);
+    if (buf[0] == 38) {
+        recieveParameters();
+    }
 }
 
 void BpmRs232Manager::recieveParameters()
 {
     unsigned char buf[38];
-    int n = RS232_PollComport(cport_nr, buf, 38);
-    if (n == 38 && buf[0] == 111 && buf[37] == 222) {
+    int n = RS232_PollComport(cport_nr, buf, 36);
+    //if (n == 38 && buf[0] == 111 && buf[37] == 222) {
         for (int i = 0; i < 6; i++) {
-            beamLocation[i] = ((uint16_t*)(buf + 1))[i];
+            beamLocation[i] = ((uint16_t*)(buf))[i];
         }
-        intensity = *((uint32_t*)(buf + 13));
-        fwhm[0] = *((uint16_t*)(buf + 17));
-        fwhm[1] = *((uint16_t*)(buf + 19));
-        skewness[0] = *((float*)(buf + 21));
-        skewness[1] = *((float*)(buf + 25));
-        deviation[0] = *((float*)(buf + 29));
-        deviation[1] = *((float*)(buf + 33));
+        intensity = *((uint32_t*)(buf + 12));
+        fwhm[0] = *((uint16_t*)(buf + 16));
+        fwhm[1] = *((uint16_t*)(buf + 18));
+        uint32_t helper = *((uint32_t*)(buf + 20));
+        skewness[0] = static_cast<float>(*((int32_t*)(buf + 20))) / 10000.0;
+        skewness[1] = static_cast<float>(*((int32_t*)(buf + 24))) / 10000.0;
+        deviation[0] = static_cast<float>(*((int32_t*)(buf + 28))) / 10000.0;
+        deviation[1] = static_cast<float>(*((int32_t*)(buf + 32))) / 10000.0;
         std::cout << "parameter fetching success" << std::endl;
+        std::cout << "skewness " << helper << std::endl;
         if (!connected) {
             connected = true;
         }
         
-    }
+    //}
 
 }
 
@@ -81,7 +86,7 @@ void BpmRs232Manager::requestPlot()
     RS232_SendByte(cport_nr, 3);
     RS232_SendByte(cport_nr, 255);
     Sleep(2000);                                                                    //wait for the plot data to become available
-    RS232_PollComport(cport_nr, buf, 3);
+    RS232_PollComport(cport_nr, buf, 2);
     int n = RS232_PollComport(cport_nr, ((unsigned char*)plot), 16668);
     std::cout << n << std::endl;
     plotDataAvailable = true;

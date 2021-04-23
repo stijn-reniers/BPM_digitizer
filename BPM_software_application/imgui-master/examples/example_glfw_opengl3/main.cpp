@@ -9,6 +9,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
+#include "BpmHttpManager.h"
 #include "BpmRs232Manager.h"
 #define plotSize 8334
 
@@ -141,7 +142,7 @@ int main(int, char**)
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    BpmCommunicationManager* comManager = new BpmRs232Manager();
+    BpmCommunicationManager* comManager = new BpmHttpManager();
     // Open COM connection and start thread
     if (!comManager->setupCommunication()) {
         return 0;
@@ -254,8 +255,8 @@ int main(int, char**)
             ImGui::InputInt("Trigger Delay", &triggerDelay);
             ImGui::SameLine();
             if (ImGui::Button("Update Delay")) {
-                if (triggerDelay > 33) {
-                    triggerDelay = 33;
+                if (triggerDelay > 60) {
+                    triggerDelay = 60;
                 }
                 if (triggerDelay < 0) {
                     triggerDelay = 0;

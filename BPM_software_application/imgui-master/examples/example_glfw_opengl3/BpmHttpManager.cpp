@@ -17,21 +17,28 @@ void BpmHttpManager::requestData()
 {
     int counter = 0;
     while (running) {
-        parameterGet();
-
-        //add changing settings
 
         if (counter > plotUpdateFrequency) {
             requestPlot();
             counter = 0;
         }
+        else {
+            parameterGet();
+            ecchoMessage = "Plot updated";
+        }
+        if (newTriggerDelay) {
+            ecchoMessage = "trigger delay update send";
+            triggerDelayPost();
+            newTriggerDelay = false;
+        }
         counter++;
-        Sleep(1000);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 
 void BpmHttpManager::cleanUpCommunication()
 {
+    curl_easy_cleanup(curl);
     curl_global_cleanup();
 }
 
@@ -39,9 +46,9 @@ void BpmHttpManager::cleanUpCommunication()
 void BpmHttpManager::requestPlot()
 {
     parameterPost(false);
-    plotPost(true);
+    plotPost();
+    std::this_thread::sleep_for(std::chrono::seconds(3));
     plotGet();
-    plotPost(false);
     parameterPost(true);
 }
 
@@ -54,18 +61,20 @@ void BpmHttpManager::plotGet()
 
     struct curl_slist* headers = NULL;
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getPlotCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &j);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
     /* Perform the request, res will get the return code */
     res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
         fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
     }
-    /* Clean up after yourself */
-    curl_easy_cleanup(curl);
+    if (result.length() > 17000) {
+        jsonParsePlot();
+    }
+    result = "";
 }
 
-void BpmHttpManager::plotPost(bool activate)
+void BpmHttpManager::plotPost()
 {
     curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:80/api/latest");
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
@@ -74,46 +83,81 @@ void BpmHttpManager::plotPost(bool activate)
 
     struct curl_slist* headers = NULL;
     headers = curl_slist_append(headers, "Content-Type: application/json");
-    headers = curl_slist_append(headers, "content-length: 55");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-    char* body = "{  \"request_id\" : \"1\",  \"get_plot_data\" : ";
-    if (activate) {
-        strcat(body, "true}");
-    }
-    else {
-        strcat(body, "false}");
-    }
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+    std::string body = "{  \"request_id\" : \"2\",  \"get_plot_data\" : true}";
+    
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
 
     /* Perform the request, res will get the return code */
     res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
         fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
     }
-    /* Clean up after yourself */
-    curl_easy_cleanup(curl);
+
 }
 
 void BpmHttpManager::jsonParseParameters()
 {
+    j = json::parse(result.c_str());
     beamLocation[0] = *j.find("peak_x_max");
     beamLocation[1] = *j.find("peak_x_start");
     beamLocation[2] = *j.find("peak_x_end");
     beamLocation[3] = *j.find("peak_y_max");
     beamLocation[4] = *j.find("peak_y_start");
-    beamLocation[5] = *j.find("peak_x_end");
-    deviation[0] = *j.find("peak_x_variance");
-    deviation[1] = *j.find("peak_y_variance");
+    beamLocation[5] = *j.find("peak_y_end");
+    std::string str = *j.find("peak_x_variance");
+    deviation[0] = std::stof(str);
+    str = *j.find("peak_y_variance");
+    deviation[1] = std::stof(str);
+    str = *j.find("skewness_x");
+    skewness[0] = std::stof(str);
+    str = *j.find("skewness_y");
+    skewness[1] = std::stof(str);
     intensity = *j.find("beam_intensity");
     fwhm[0] = *j.find("fwhm_x");
     fwhm[1] = *j.find("fwhm_y");
-    skewness[0] = *j.find("skewness_x");
-    skewness[1] = *j.find("skewness_y");
+
 }
 
 void BpmHttpManager::jsonParsePlot()
 {
+    j = json::parse(result.c_str());
+    std::string data = (*j.find("data"));
+    std::cout << "data length: " << data.length() << std::endl;
+    std::replace(data.begin(), data.end(), ';', ' ');
+    std::stringstream ss(data);
+    int i = 0;
+    while (i<8334 && ss >> plot[i]) {
+        i++;
+    }
+    plotDataAvailable = true;
+
+}
+
+void BpmHttpManager::triggerDelayPost()
+{
+    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:80/api/latest");
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+    /* if redirected, tell libcurl to follow redirection */
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+    struct curl_slist* headers = NULL;
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    std::string body = "{  \"request_id\" : \"3\",  \"set_trigger_delay\" : ";
+    body.append(std::to_string(triggerDelay));
+    body.append("}");
+    std::cout << body << std::endl;
+
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+
+    /* Perform the request, res will get the return code */
+    res = curl_easy_perform(curl);
+    if (res != CURLE_OK) {
+        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+    }
 }
 
 void BpmHttpManager::parameterPost(bool activate)
@@ -125,31 +169,29 @@ void BpmHttpManager::parameterPost(bool activate)
 
     struct curl_slist* headers = NULL;
     headers = curl_slist_append(headers, "Content-Type: application/json");
-    headers = curl_slist_append(headers, "content-length: 55");
+    //headers = curl_slist_append(headers, "content-length: 55");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-    char* body = "{  \"request_id\" : \"1\",  \"get_beam_params\" : ";
+    std::string body = "{  \"request_id\" : \"1\",  \"get_beam_params\" : ";
     if (activate) {
-        strcat(body, "true}");
+        body.append("true}");
+
     }
     else {
-        strcat(body, "false}");
+        body.append("false}");
     }
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
 
     /* Perform the request, res will get the return code */
     res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
         fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
     }
-    /* Clean up after yourself */
-    curl_easy_cleanup(curl);
+
 
 }
 
 void BpmHttpManager::parameterGet()
 {
-
     curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:80/api/latest");
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
     /* if redirected, tell libcurl to follow redirection */
@@ -157,30 +199,28 @@ void BpmHttpManager::parameterGet()
 
     struct curl_slist* headers = NULL;
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getParameterCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &j);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
     /* Perform the request, res will get the return code */
     res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
         fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
     }
-    /* Clean up after yourself */
-    curl_easy_cleanup(curl);
-
+    if (result.length() > 17000 || (result.length() < 500 && result.length()>400)) {
+        jsonParseParameters();
+    }
+    result = "";
 
 }
 
-std::size_t getParameterCallback(const char* in, std::size_t size, std::size_t num, json* out)
+std::size_t getCallback(const char* in, std::size_t size, std::size_t num, std::string* out)
 {
     const std::size_t totalBytes(size * num);
-    *out = json::parse(in);
+    // *out = json::parse(in);
+    (*out).append(in);
+    std::cout << (*out).length() << std::endl;
     return totalBytes;
 }
 
-std::size_t getPlotCallback(const char* in, std::size_t size, std::size_t num, json* out)
-{
-    const std::size_t totalBytes(size * num);
-    *out = json::parse(in);
-    return totalBytes;
-}
+
 
