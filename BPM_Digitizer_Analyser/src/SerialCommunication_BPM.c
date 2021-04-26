@@ -17,7 +17,7 @@
 uint16_t size_indicator = BUFFER_SIZE_PLOTDATA + 2;
 /* Pdc transfer buffer */
 uint8_t host_command[BUFFER_SIZE_HOST_COMMAND] = {0};
-uint8_t config[5] = {0};
+uint8_t config[5] = {0,20,0,0,0};
 
 /* PDC data packet for host computer commands */
 pdc_packet_t g_pdc_uart_packet;

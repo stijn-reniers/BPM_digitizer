@@ -22,7 +22,7 @@ uint16_t fwhm[2][16] = {0};
 float skewness[2][16] = {0};
 	
 uint16_t cycle = 0;
-
+uint16_t current_offset=0x800;
 
 
 /**************************************************************************************************
@@ -394,7 +394,7 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 
 void compute_beam_parameters()
 {
-	detect_peaks(20);	// threshold of 20 (16 mv), might be made user-configurable later
+	detect_peaks(config[1]);	// threshold of 20 (16 mv), might be made user-configurable later
 	compute_beam_intensity(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
 	compute_fwhm(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle], peak_location[0][cycle], peak_location[3][cycle]);
 	compute_skewness(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
@@ -462,14 +462,21 @@ void compute_avgd_parameters()
 
 void dc_offset_compensation(){
 	
-	int dc_integral = 0;
-	
-	for (uint16_t i = half_cycle_length - 250; i < half_cycle_length + 250; i++)
+	uint dc_integral = 0;
+	uint offset_target=10;
+	for (uint16_t i =peak_location[2][cycle]; i < peak_location[5][cycle]; i++)
 	{
-		dc_integral += (algorithm_buffer[i]-2048);
+		dc_integral += algorithm_buffer[i];
 	}
 	
-	uint16_t avg_dc_offset = dc_integral/500;
-	afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, 0x800 + avg_dc_offset);
+	uint avg_dc_offset = dc_integral/(peak_location[5][cycle]-peak_location[2][cycle]);
 	
+	if(avg_dc_offset>offset_target){
+		current_offset-= (avg_dc_offset-offset_target) ; 
+	}else if(avg_dc_offset<offset_target){
+		current_offset+= (offset_target-avg_dc_offset) ; 
+	}
+	
+	afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6,current_offset);
+
 }

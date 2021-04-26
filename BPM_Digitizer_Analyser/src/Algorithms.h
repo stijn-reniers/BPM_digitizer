@@ -4,6 +4,7 @@
 #include <math.h>
 #define buffersize 8334
 #include "buffer.h"
+#include "serialCommunication_BPM.h"
 
 
 uint8_t beam_parameters_bytes[38];

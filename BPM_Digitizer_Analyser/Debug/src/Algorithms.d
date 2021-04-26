@@ -154,7 +154,8 @@ src/Algorithms.d src/Algorithms.o: ../src/Algorithms.c \
  ../src/config/conf_uart_serial.h ../src/ASF/sam/drivers/tc/tc.h \
  d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\string.h \
  d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\xlocale.h \
- d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\sys\string.h
+ d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\sys\string.h \
+ ../src/serialCommunication_BPM.h
 
 ../src/algorithms.h:
 
@@ -487,3 +488,5 @@ d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\string.h:
 d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\xlocale.h:
 
 d:\atmel\7.0\toolchain\arm\arm-gnu-toolchain\arm-none-eabi\include\sys\string.h:
+
+../src/serialCommunication_BPM.h:
