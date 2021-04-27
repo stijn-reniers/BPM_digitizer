@@ -1,5 +1,6 @@
 #include "buffer.h"
 #include "serialCommunication_BPM.h"
+#include "Algorithms.h"
 #include <stdio.h>
 #include <stdbool.h>
 	
@@ -25,7 +26,8 @@ void addSampleCollector(uint16_t sample){
 	
 	if (bufferIndexCollector<buffersize )
 	{
-		afec_buffer_collector[bufferIndexCollector]= sample;
+		afec_buffer_collector[bufferIndexCollector] = sample;
+			
 		bufferIndexCollector++;
 	}
 }
@@ -49,7 +51,6 @@ volatile void switchBuffer(void){
 	{
 		buffersFilled=0; 
 		swap(&algorithm_buffer, &transmit_buffer);
-		
 		
 	} 
 	

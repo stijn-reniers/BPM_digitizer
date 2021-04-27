@@ -97,7 +97,6 @@ void ACC_Handler(void)
 			{
 				triggered= true;											
 															
-				
 				if(triggerOffset == 0)
 				{
 					fullBuffer=true;
@@ -217,7 +216,7 @@ static void configure_afec(void)
 
 	afec_init(AFEC0, &afec_cfg);
 	afec_ch_set_config(AFEC0, AFEC_CHANNEL_6, &afec_ch_cfg);
-	afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, 0x800);
+	afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, current_offset);
 	
 	configure_tc_trigger();
 	
@@ -297,6 +296,7 @@ int main (void)
 	
 	while (1) 
 	{
+		
 		
 		if(fullBuffer)												// flag that indicates a cycle has ended
 		{
