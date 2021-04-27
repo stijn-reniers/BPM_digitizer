@@ -10,7 +10,12 @@ using json = nlohmann::json;
 class BpmHttpManager :public BpmCommunicationManager
 {
 public:
-
+    BpmHttpManager(int portNr) {
+        serverSite = "http://localhost:";
+        serverSite.append(std::to_string(portNr));
+        serverSite.append("/api/latest");
+        std::cout << serverSite << std::endl;
+    };
     // Inherited via BpmCommunicationManager
     virtual bool setupCommunication() override;
     virtual void requestData() override;
@@ -30,6 +35,7 @@ private:
     CURL* curl;
     CURLcode res;
     std::string result;
+    std::string serverSite;
     bool updateEchoMessage = false;
 };
 

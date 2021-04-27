@@ -5,6 +5,7 @@
 class BpmRs232Manager :public BpmCommunicationManager
 {
 public:
+    BpmRs232Manager(int com): cport_nr(com) {};
     // Inherited via BpmCommunicationManager
     virtual bool setupCommunication() override;
     virtual void requestData() override;
