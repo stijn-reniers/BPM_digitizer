@@ -142,7 +142,31 @@ int main(int, char**)
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    BpmCommunicationManager* comManager = new BpmHttpManager();
+    BpmCommunicationManager* comManager;
+    std::cout << "Enter 1 for rs232 communication or enter 2 for http communication:" << std::endl;
+    int choise;
+    std::cin >> choise;
+    if (choise == 1) {
+        std::cout << "You chose rs232" << std::endl;
+        std::cout << "Enter COM number:" << std::endl;
+        int com;
+        std::cin >> com;
+        if(com>0)
+            comManager = new BpmRs232Manager(com-1);
+
+    }
+    else if (choise == 2) {
+        std::cout << "you chose http" << std::endl;
+        std::cout << "Enter port number:" << std::endl;
+        int port;
+        std::cin >> port;
+        if (port > 0)
+            comManager = new BpmHttpManager(port);
+    }
+    else {
+        return 0;
+    }
+    
     // Open COM connection and start thread
     if (!comManager->setupCommunication()) {
         return 0;
