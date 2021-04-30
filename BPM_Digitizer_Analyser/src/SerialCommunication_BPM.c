@@ -101,7 +101,6 @@ void console_uart_irq_handler(void)
 			}
 		}
 		
-		//if (command_index == 0) pdc_tx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);						// This transfer echoes the received packet that caused this interrupt, so computer application can check if command is correctly received (only for debugging)
 	}
 	
 	

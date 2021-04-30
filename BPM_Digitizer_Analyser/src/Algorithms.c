@@ -22,7 +22,9 @@ uint16_t fwhm[2][16] = {0};
 float skewness[2][16] = {0};
 	
 uint16_t cycle = 0;
-uint16_t current_offset=0x800;
+uint16_t current_offset= 2048;
+uint avg_dc_offset = 0;
+uint offset_target = 20;
 
 
 /**************************************************************************************************
@@ -164,7 +166,6 @@ void compute_beam_intensity(uint16_t peak1_left, uint16_t peak1_right, uint16_t 
 	{
 		beam_intensity[1][cycle] += (uint32_t)algorithm_buffer[i];
 	}
-	
 	
 }
 
@@ -326,7 +327,6 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 } 
 
 /* Alternative method for skewness, employing Pearson's coefficient of skewness 
-
    void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_left, uint16_t peak2_right, uint16_t peak1_max, uint16_t peak2_max)
    {
 	   double first_peak_mean  =  sample_average(peak1_left, peak1_right);
@@ -335,7 +335,6 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 	   uint16_t first_peak_median = 0;
 	   uint16_t half_intensity = beam_intensity[0][cycle]/2;
 	   uint32_t left_med = 0;
-
 	   for (uint16_t i=peak1_left;i<peak1_right;i++ )
 	   {
 		   left_med += algorithm_buffer[i];
@@ -345,7 +344,6 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 			   break;
 		   }
 	   }
-
 	   half_intensity = beam_intensity[1][cycle]/2;
 	   uint16_t second_peak_median = 0;
 	   uint32_t right_med = 0;
@@ -394,10 +392,13 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 
 void compute_beam_parameters()
 {
-	detect_peaks(config[1]);	// threshold of 20 (16 mv), might be made user-configurable later
+	dc_offset_compensation();
+	detect_peaks(config[1] + 2048 - current_offset);	// threshold of 20 (16 mv), might be made user-configurable later
+	set_peaks();
 	compute_beam_intensity(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
 	compute_fwhm(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle], peak_location[0][cycle], peak_location[3][cycle]);
 	compute_skewness(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
+	reset_peaks();
 	//compute_skewness(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle], peak_location[0][cycle], peak_location[3][cycle]);
 	
 	cycle++;
@@ -427,7 +428,7 @@ void compute_avgd_parameters()
 		for (uint8_t j = 0; j < 16; j++) average_intensity += beam_intensity[i][j];
 	}
 	
-	*intensityPtr = (uint32_t)(average_intensity/32);
+	*intensityPtr = (uint32_t) avg_dc_offset;//(uint32_t)(average_intensity/32);
 	
 	
 	//peak variance
@@ -463,20 +464,46 @@ void compute_avgd_parameters()
 void dc_offset_compensation(){
 	
 	uint dc_integral = 0;
-	uint offset_target=10;
-	for (uint16_t i =peak_location[2][cycle]; i < peak_location[5][cycle]; i++)
+	
+	for (uint16_t i = peak_location[2][cycle]; i < peak_location[4][cycle]; i++)
 	{
 		dc_integral += algorithm_buffer[i];
 	}
 	
-	uint avg_dc_offset = dc_integral/(peak_location[5][cycle]-peak_location[2][cycle]);
+	avg_dc_offset = dc_integral/(peak_location[4][cycle]-peak_location[2][cycle]);			// always a positive number !
 	
 	if(avg_dc_offset>offset_target){
-		current_offset-= (avg_dc_offset-offset_target) ; 
+		current_offset+= 1; 
 	}else if(avg_dc_offset<offset_target){
-		current_offset+= (offset_target-avg_dc_offset) ; 
+		current_offset-= 1; 
 	}
 	
 	afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6,current_offset);
 
+}
+
+void set_peaks(void)
+{
+	for(uint16_t i = peak_location[1][cycle]; i < peak_location[2][cycle];i++)
+	{
+		algorithm_buffer[i] -= avg_dc_offset;
+	}
+	
+	for(uint16_t i = peak_location[4][cycle]; i < peak_location[5][cycle];i++)
+	{
+		algorithm_buffer[i] -= avg_dc_offset;
+	}
+}
+
+void reset_peaks(void)
+{
+	for(uint16_t i = peak_location[1][cycle]; i < peak_location[2][cycle];i++)
+	{
+		algorithm_buffer[i] += avg_dc_offset;
+	}
+	
+	for(uint16_t i = peak_location[4][cycle]; i < peak_location[5][cycle];i++)
+	{
+		algorithm_buffer[i] += avg_dc_offset;
+	}
 }

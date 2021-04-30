@@ -16,6 +16,8 @@ float skewness[2][16];
 
 uint16_t cycle;
 
+uint16_t current_offset;
+uint avg_dc_offset;
 // Accumulators to compute average values
 
 uint32_t average_peak_info;
@@ -73,6 +75,10 @@ void compute_avgd_parameters(void);
 /* Detect and adjust the DC-offset of the collector signal automatically */
 
 void dc_offset_compensation(void);
+
+void set_peaks(void);
+
+void reset_peaks(void);
 
 
 
