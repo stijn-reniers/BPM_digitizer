@@ -214,9 +214,9 @@ int main(int, char**)
                     ImGui::TableNextColumn();
                     ImGui::Text(titleParameters[row]);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%u", positions[beamPositionOrder[2 * row]]);
+                    ImGui::Text("%f mm",(float) (positions[beamPositionOrder[2 * row]])/6.945);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%u", positions[beamPositionOrder[(2 * row) + 1]]);
+                    ImGui::Text("%f mm", (float)(positions[beamPositionOrder[2 * row]]) / 6.945);
                 }
                 //deviation
                 float* stdeviation = comManager->getDeviation();
@@ -224,25 +224,25 @@ int main(int, char**)
                 ImGui::TableNextColumn();
                 ImGui::Text(titleParameters[3]);
                 ImGui::TableNextColumn();
-                ImGui::Text("%f", stdeviation[0]);
+                ImGui::Text("%f mm", stdeviation[0]/ 6.945);
                 ImGui::TableNextColumn();
-                ImGui::Text("%f", stdeviation[1]);
+                ImGui::Text("%f mm", stdeviation[1]/ 6.945);
                 //Intensity
                 uint32_t* intensity = comManager->getIntensity();
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::Text(titleParameters[4]);
                 ImGui::TableNextColumn();
-                ImGui::Text("%u", *intensity);
+                ImGui::Text("%f nA",(float)(*intensity)/7020);
                 //FWHM
                 uint16_t* FWHM = comManager->getFwhm();
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 ImGui::Text(titleParameters[5]);
                 ImGui::TableNextColumn();
-                ImGui::Text("%u", FWHM[0]);
+                ImGui::Text("%f mm",(float) (FWHM[0])/6.945);
                 ImGui::TableNextColumn();
-                ImGui::Text("%u", FWHM[1]);
+                ImGui::Text("%f mm", (float)(FWHM[1]) / 6.945);
                 //skewness
                 float* skewness = comManager->getSkewness();
                 ImGui::TableNextRow();
