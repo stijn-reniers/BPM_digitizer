@@ -9,7 +9,7 @@
 	2.	Trigger level 
 	3.	Send flag for beam parameters
 	4.	Send flag for plot data
-	5.	Select fiducial or collector data (not implemented as for now)
+	5.	Correct DC offset automatically
 	
 	**/
 

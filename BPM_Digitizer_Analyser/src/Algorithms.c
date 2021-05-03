@@ -392,13 +392,18 @@ void compute_skewness(uint16_t peak1_left, uint16_t peak1_right, uint16_t peak2_
 
 void compute_beam_parameters()
 {
-	dc_offset_compensation();
+	if (config[4] == 255) dc_offset_compensation();
 	detect_peaks(config[1] + 2048 - current_offset);	// threshold of 20 (16 mv), might be made user-configurable later
-	set_peaks();
+	if (config[4] == 255) set_peaks();
 	compute_beam_intensity(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
 	compute_fwhm(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle], peak_location[0][cycle], peak_location[3][cycle]);
 	compute_skewness(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle]);
-	reset_peaks();
+	if (config[4] == 255) reset_peaks();
+	else 
+	{
+		afec_channel_set_analog_offset(AFEC0,AFEC_CHANNEL_6, 2048);
+		current_offset = 2048;
+	}
 	//compute_skewness(peak_location[1][cycle], peak_location[2][cycle], peak_location[4][cycle], peak_location[5][cycle], peak_location[0][cycle], peak_location[3][cycle]);
 	
 	cycle++;
@@ -428,7 +433,7 @@ void compute_avgd_parameters()
 		for (uint8_t j = 0; j < 16; j++) average_intensity += beam_intensity[i][j];
 	}
 	
-	*intensityPtr = (uint32_t) avg_dc_offset;//(uint32_t)(average_intensity/32);
+	*intensityPtr = (uint32_t)(average_intensity/32);
 	
 	
 	//peak variance

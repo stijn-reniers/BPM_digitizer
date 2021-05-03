@@ -214,9 +214,9 @@ int main(int, char**)
                     ImGui::TableNextColumn();
                     ImGui::Text(titleParameters[row]);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%f mm",(float) (positions[beamPositionOrder[2 * row]])/6.945);
+                    ImGui::Text("%f mm",(float) (positions[beamPositionOrder[2 * row]])/69.45);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%f mm", (float)(positions[beamPositionOrder[2 * row]]) / 6.945);
+                    ImGui::Text("%f mm", (float)(positions[beamPositionOrder[2 * row + 1]]) / 69.45);
                 }
                 //deviation
                 float* stdeviation = comManager->getDeviation();
@@ -224,9 +224,9 @@ int main(int, char**)
                 ImGui::TableNextColumn();
                 ImGui::Text(titleParameters[3]);
                 ImGui::TableNextColumn();
-                ImGui::Text("%f mm", stdeviation[0]/ 6.945);
+                ImGui::Text("%f mm", stdeviation[0]/ 69.45);
                 ImGui::TableNextColumn();
-                ImGui::Text("%f mm", stdeviation[1]/ 6.945);
+                ImGui::Text("%f mm", stdeviation[1]/ 69.45);
                 //Intensity
                 uint32_t* intensity = comManager->getIntensity();
                 ImGui::TableNextRow();
@@ -240,9 +240,9 @@ int main(int, char**)
                 ImGui::TableNextColumn();
                 ImGui::Text(titleParameters[5]);
                 ImGui::TableNextColumn();
-                ImGui::Text("%f mm",(float) (FWHM[0])/6.945);
+                ImGui::Text("%f mm",(float) (FWHM[0])/69.45);
                 ImGui::TableNextColumn();
-                ImGui::Text("%f mm", (float)(FWHM[1]) / 6.945);
+                ImGui::Text("%f mm", (float)(FWHM[1]) / 69.45);
                 //skewness
                 float* skewness = comManager->getSkewness();
                 ImGui::TableNextRow();
