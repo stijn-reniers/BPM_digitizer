@@ -62,7 +62,7 @@ void BpmHttpManager::requestPlot()
 
 void BpmHttpManager::plotGet()
 {
-    curl_easy_setopt(curl, CURLOPT_URL, serverSite);
+    curl_easy_setopt(curl, CURLOPT_URL, serverSite.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
     /* if redirected, tell libcurl to follow redirection */
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -84,7 +84,7 @@ void BpmHttpManager::plotGet()
 
 void BpmHttpManager::plotPost()
 {
-    curl_easy_setopt(curl, CURLOPT_URL, serverSite);
+    curl_easy_setopt(curl, CURLOPT_URL, serverSite.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
     /* if redirected, tell libcurl to follow redirection */
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -152,7 +152,7 @@ void BpmHttpManager::jsonParsePlot()
 
 void BpmHttpManager::triggerDelayPost()
 {
-    curl_easy_setopt(curl, CURLOPT_URL, serverSite);
+    curl_easy_setopt(curl, CURLOPT_URL, serverSite.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
     /* if redirected, tell libcurl to follow redirection */
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -177,7 +177,7 @@ void BpmHttpManager::triggerDelayPost()
 
 void BpmHttpManager::parameterPost(bool activate)
 {
-    curl_easy_setopt(curl, CURLOPT_URL, serverSite);
+    curl_easy_setopt(curl, CURLOPT_URL, serverSite.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
     /* if redirected, tell libcurl to follow redirection */
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -207,7 +207,7 @@ void BpmHttpManager::parameterPost(bool activate)
 
 void BpmHttpManager::parameterGet()
 {
-    curl_easy_setopt(curl, CURLOPT_URL, serverSite);
+    curl_easy_setopt(curl, CURLOPT_URL, serverSite.c_str());
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
     /* if redirected, tell libcurl to follow redirection */
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
