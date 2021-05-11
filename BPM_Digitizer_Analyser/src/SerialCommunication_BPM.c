@@ -49,6 +49,7 @@ Pdc *g_p_uart_pdc;
 
 
 /* Configure UART module with desired settings*/
+/* Selected UART-module is defined in conf_uart_serial.h */
 
 void configure_UART(void)
 {
@@ -62,13 +63,18 @@ void configure_UART(void)
 }
 
 
-/* Send the plotting data (8334 12-bit sample values) of one BPM80-cycle */
+/* Send the plotting data (8334 uint_16 sample values) of one BPM80-cycle */
 
 void send_cycle_plot()
 {	
+	/* Add the size indicator delimiter to the front of the packet */
 	usart_serial_write_packet(UART0, &size_indicator, 2);
+	
+	/* Start the PDC transfer of the payload */
 	pdc_tx_init(g_p_uart_pdc, &cycle_plot_packet, NULL);
-	config[3] = 0;														// reset the plotting data flag in configuration array
+	
+	/* reset the plotting data flag in the configuration array */
+	config[3] = 0;														
 																	
 }
 
@@ -77,31 +83,44 @@ void send_cycle_plot()
 
 void send_beam_parameters()
 {
+	
 	compute_avgd_parameters();
-	//uint16_t size_indicator = BUFFER_SIZE_PARAMETERS;
+	
+	/* Add the size indicator delimiter to the front of the packet */
 	beam_parameters_bytes[0] = BUFFER_SIZE_PARAMETERS & 0xff;
 	beam_parameters_bytes[1] = (BUFFER_SIZE_PARAMETERS << 8) & 0xff00;
+	
+	/* Start the PDC transfer of the packet*/
 	pdc_tx_init(g_p_uart_pdc, &beam_parameters_packet, NULL);
-	config[2] = 0;																		// reset parameter data flag in configuration array
+	
+	/* reset the parameter data flag in the configuration array */
+	config[2] = 0;																		
+	
 }
 
 
-/* Interrupt handler for UART interrupt. */
+/* Interrupt handler for console UART interrupt. */
  
 void console_uart_irq_handler(void)
 {
-	//Get UART status and check if PDC receive buffer is full 
+	/* Get UART status and check if PDC receive buffer is full (host command received) */
+	
 	if ((uart_get_status(CONSOLE_UART) & UART_SR_RXBUFF) == UART_SR_RXBUFF) {
 		
-		// Configure PDC for data transfer (RX and TX) 
+		/* Configure PDC for data transfer (RX and TX) */
 		
-		pdc_rx_init(g_p_uart_pdc, &host_command_packet, NULL);				// pass the PDC register base and the address of the transfer buffer, will start the transfer and wait until expected amount of data is received (which will trigger interrupt)
+		pdc_rx_init(g_p_uart_pdc, &host_command_packet, NULL);				
 		
 		uint8_t command_index = 0;
-		if(host_command[0] == 255)											// check front delimiter of the host packet
+		
+		/* Check is a host command is correctly received and extract data*/
+		if(host_command[0] == 255)											
 		{
-			command_index= host_command[1];											// second element of host command contains index in configuration array (indicates which setting to change)
-			config[command_index] = host_command[2];								// third element is the new value of the specified setting
+			/* Update the configuration setting affected by the host command */
+			command_index= host_command[1];											
+			config[command_index] = host_command[2];	
+			
+			/* For all configuration setting changes, echo back the request*/							
 			if(command_index!= 2 && command_index!= 3){
 				echo[0] = BUFFER_SIZE_ECHO & 0xff;
 				echo[1] = (BUFFER_SIZE_ECHO << 8) & 0xff00;
@@ -116,22 +135,27 @@ void console_uart_irq_handler(void)
 }
 
 
+/* Initialize the Peripheral DMA controller for UART communication*/
+
 void pdc_uart_initialization(void)
 {
 	/* Initialize the UART console */
+	
 	configure_UART();
 
 	/* Get pointer to UART PDC register base */
+	
 	g_p_uart_pdc = uart_get_pdc_base(CONSOLE_UART);
 
 	/* Initialize PDC data packet for transfer (receive/transmit) by specifying base pointer and size of the packet */
-	host_command_packet.ul_addr = (uint32_t) host_command;					// receive buffer which we also echo back to the computer
+	
+	host_command_packet.ul_addr = (uint32_t) host_command;					
 	host_command_packet.ul_size = BUFFER_SIZE_HOST_COMMAND;								
 	
-	beam_parameters_packet.ul_addr = (uint32_t) beam_parameters_bytes;			// transmit packet/buffer for beam parameters
+	beam_parameters_packet.ul_addr = (uint32_t) beam_parameters_bytes;			
 	beam_parameters_packet.ul_size = BUFFER_SIZE_PARAMETERS;
 	
-	cycle_plot_packet.ul_addr = (uint32_t) transmit_buffer;					// start address of transfer packet data is the buffer we defined ourselves
+	cycle_plot_packet.ul_addr = (uint32_t) transmit_buffer;					
 	cycle_plot_packet.ul_size = BUFFER_SIZE_PLOTDATA;
 	
 	echo_packet.ul_addr = (uint32_t) echo;
@@ -139,13 +163,16 @@ void pdc_uart_initialization(void)
 	
 	/* Enable PDC transfers, here we set both transmitter and receiver high (full duplex). Receiver and transmitter hardware operate independently. 
 	   We start the receive transfer, transmits are always started in response to a received command*/
+	
 	pdc_enable_transfer(g_p_uart_pdc, PERIPH_PTCR_RXTEN | PERIPH_PTCR_TXTEN);
 	pdc_rx_init(g_p_uart_pdc, &host_command_packet, NULL);
 	
 	/* Enable UART IRQ for receive buffer full (host command received)*/
+	
 	uart_enable_interrupt(CONSOLE_UART, UART_IER_RXBUFF);
 	
 	/* Enable UART interrupt */
+	
 	NVIC_EnableIRQ(CONSOLE_UART_IRQn);
 	
 }

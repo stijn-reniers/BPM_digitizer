@@ -41,9 +41,9 @@
 /** UART Interface */
 #define CONF_UART            CONSOLE_UART
 /** Baudrate setting */
-#define CONF_UART_BAUDRATE   115200					// change to 9600 for daemon
+#define CONF_UART_BAUDRATE   115200					
 /** Parity setting */
-#define CONF_UART_PARITY     UART_MR_PAR_NO		    // change back to noparity
+#define CONF_UART_PARITY     UART_MR_PAR_NO		    
 
 
 /* A reference setting for USART */
