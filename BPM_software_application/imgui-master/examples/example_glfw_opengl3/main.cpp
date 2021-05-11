@@ -138,7 +138,7 @@ int main(int, char**)
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Our state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -216,7 +216,7 @@ int main(int, char**)
                     ImGui::TableNextColumn();
                     ImGui::Text("%f mm",(float) (positions[beamPositionOrder[2 * row]])/69.45);
                     ImGui::TableNextColumn();
-                    ImGui::Text("%f mm", (float)(positions[beamPositionOrder[2 * row + 1]]) / 69.45);
+                    ImGui::Text("%f mm", (float)(positions[beamPositionOrder[2 * row + 1]]- 4167) / 69.45);
                 }
                 //deviation
                 float* stdeviation = comManager->getDeviation();

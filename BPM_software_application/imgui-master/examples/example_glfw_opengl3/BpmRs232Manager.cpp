@@ -27,6 +27,7 @@ void BpmRs232Manager::requestData()
             counter = 0;
         }
         counter++;
+        RS232_flushRXTX(cport_nr);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
@@ -54,7 +55,6 @@ void BpmRs232Manager::recieveParameters()
 {
     unsigned char buf[38];
     int n = RS232_PollComport(cport_nr, buf, 36);
-    //if (n == 38 && buf[0] == 111 && buf[37] == 222) {
         for (int i = 0; i < 6; i++) {
             beamLocation[i] = ((uint16_t*)(buf))[i];
         }
@@ -67,12 +67,9 @@ void BpmRs232Manager::recieveParameters()
         deviation[0] = static_cast<float>(*((int32_t*)(buf + 28))) / 10000.0;
         deviation[1] = static_cast<float>(*((int32_t*)(buf + 32))) / 10000.0;
         std::cout << "parameter fetching success" << std::endl;
-        std::cout << "skewness " << helper << std::endl;
         if (!connected) {
             connected = true;
         }
-        
-    //}
 
 }
 

@@ -3,6 +3,10 @@
 #include "Algorithms.h"
 #include <stdio.h>
 #include <stdbool.h>
+
+/**************************************************************************************************
+ ***************************** DATA BUFFERS IMPLEMENTATION*****************************************
+ **************************************************************************************************/
 	
 uint16_t bufferIndexCollector=0;
 uint16_t buffersFilled = 0;
@@ -13,7 +17,7 @@ uint16_t buffer0[buffersize]={ 0 };
 uint16_t buffer1[buffersize]={ 0 };
 uint16_t buffer2[buffersize]={ 0 };
 
-/* Three buffer pointers, that can each be assigned to one of the three instances */
+/* Three buffer pointers are each assigned to one of the three instances */
 
 uint16_t* afec_buffer_collector = buffer0;
 uint16_t* algorithm_buffer = buffer1;
@@ -75,5 +79,3 @@ void cycleEnded(void){
 	
 	switchBuffer();
 }
-
-
