@@ -7,31 +7,43 @@
 #include "buffer.h"
 #include "algorithms.h"
 
+/* Size of the Pdc transmit- and receive buffers in BYTES*/
 
-
-/* Size of the Pdc transmit buffer (echoing the Matlab-host commands, omitted in case of C++ ImGUI host) in BYTES*/
-#define BUFFER_SIZE_HOST_COMMAND  3	
-#define BUFFER_SIZE_PARAMETERS	  38				// change to 112 for double-based transmission
-#define BUFFER_SIZE_PLOTDATA	  16668					
+#define BUFFER_SIZE_HOST_COMMAND  3
+#define BUFFER_SIZE_PARAMETERS	  38				
+#define BUFFER_SIZE_PLOTDATA	  16668
 #define BUFFER_SIZE_ECHO		  5
+
 uint16_t size_indicator = BUFFER_SIZE_PLOTDATA + 2;
+
+/**************************************************************************************************
+ ***************************** BPM SERIAL COMMUNICATION IMPLEMENTATION ****************************
+ **************************************************************************************************/
+
+
 /* Pdc transfer buffer */
+
 uint8_t host_command[BUFFER_SIZE_HOST_COMMAND] = {0};
 uint8_t config[5] = {0,20,0,0,0};
 
 /* PDC data packet for host computer commands */
-pdc_packet_t g_pdc_uart_packet;
+
+pdc_packet_t host_command_packet;
 
 /* PDC data packet for transmitting beam_parameters */
+
 pdc_packet_t beam_parameters_packet;											
 
-/* PDC data packet for transmitting beam_parameters */
+/* PDC data packet for transmitting plot data */
+
 pdc_packet_t cycle_plot_packet;			
 									
 /* PDC data packet for echoing settings changes */
+
 pdc_packet_t echo_packet;
 
 /* Pointer to UART PDC register base (collection of peripheral hardware registers)*/
+
 Pdc *g_p_uart_pdc;
 
 
@@ -83,7 +95,7 @@ void console_uart_irq_handler(void)
 		
 		// Configure PDC for data transfer (RX and TX) 
 		
-		pdc_rx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);				// pass the PDC register base and the address of the transfer buffer, will start the transfer and wait until expected amount of data is received (which will trigger interrupt)
+		pdc_rx_init(g_p_uart_pdc, &host_command_packet, NULL);				// pass the PDC register base and the address of the transfer buffer, will start the transfer and wait until expected amount of data is received (which will trigger interrupt)
 		
 		uint8_t command_index = 0;
 		if(host_command[0] == 255)											// check front delimiter of the host packet
@@ -100,10 +112,7 @@ void console_uart_irq_handler(void)
 				pdc_tx_init(g_p_uart_pdc, &echo_packet, NULL);
 			}
 		}
-		
 	}
-	
-	
 }
 
 
@@ -116,8 +125,8 @@ void pdc_uart_initialization(void)
 	g_p_uart_pdc = uart_get_pdc_base(CONSOLE_UART);
 
 	/* Initialize PDC data packet for transfer (receive/transmit) by specifying base pointer and size of the packet */
-	g_pdc_uart_packet.ul_addr = (uint32_t) host_command;					// receive buffer which we also echo back to the computer
-	g_pdc_uart_packet.ul_size = BUFFER_SIZE_HOST_COMMAND;								
+	host_command_packet.ul_addr = (uint32_t) host_command;					// receive buffer which we also echo back to the computer
+	host_command_packet.ul_size = BUFFER_SIZE_HOST_COMMAND;								
 	
 	beam_parameters_packet.ul_addr = (uint32_t) beam_parameters_bytes;			// transmit packet/buffer for beam parameters
 	beam_parameters_packet.ul_size = BUFFER_SIZE_PARAMETERS;
@@ -131,7 +140,7 @@ void pdc_uart_initialization(void)
 	/* Enable PDC transfers, here we set both transmitter and receiver high (full duplex). Receiver and transmitter hardware operate independently. 
 	   We start the receive transfer, transmits are always started in response to a received command*/
 	pdc_enable_transfer(g_p_uart_pdc, PERIPH_PTCR_RXTEN | PERIPH_PTCR_TXTEN);
-	pdc_rx_init(g_p_uart_pdc, &g_pdc_uart_packet, NULL);
+	pdc_rx_init(g_p_uart_pdc, &host_command_packet, NULL);
 	
 	/* Enable UART IRQ for receive buffer full (host command received)*/
 	uart_enable_interrupt(CONSOLE_UART, UART_IER_RXBUFF);

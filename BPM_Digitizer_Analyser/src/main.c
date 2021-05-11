@@ -39,6 +39,8 @@
 #define DACC_ANALOG_CONTROL (DACC_ACR_IBCTLCH0(0x02) \
 							| DACC_ACR_IBCTLCH1(0x02) \
 							| DACC_ACR_IBCTLDACCORE(0x01))
+
+#define SAMPLING_FREQUENCY 125000
 							
 								
 /** ------------------------------------------------------------------------------------ */
@@ -102,7 +104,7 @@ void ACC_Handler(void)
 					fullBuffer=true;
 					tc_start(TC0,0);
 					cycleEnded();											// performs the buffer pointer switch 
-					ioport_set_pin_level(delayOutput, IOPORT_PIN_LEVEL_HIGH);
+					//ioport_set_pin_level(delayOutput, IOPORT_PIN_LEVEL_HIGH);
 				}
 				
 				else														
@@ -164,7 +166,7 @@ static void configure_tc_trigger(void)
 	uint32_t ul_tc_clks = 0;
 	uint32_t ul_sysclk = sysclk_get_cpu_hz();											
 	
-	int sampleFreq= 125000;
+	int sampleFreq= SAMPLING_FREQUENCY;
 	
 	pmc_enable_periph_clk(ID_TC0);														// Enable peripheral clock of timer counter 0
 	pmc_enable_periph_clk(ID_TC1);
@@ -304,6 +306,8 @@ int main (void)
 			
 			/* Compute the parameters corresponding to this cycle*/
 			compute_beam_parameters();
+			
+			ioport_set_pin_level(delayOutput, IOPORT_PIN_LEVEL_HIGH);
 			
 			/* Check if data has to be send */
 			if (config[2]!= 0) send_beam_parameters();
