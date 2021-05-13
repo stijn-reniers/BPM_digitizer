@@ -14,7 +14,6 @@ public:
         serverSite = "http://localhost:";
         serverSite.append(std::to_string(portNr));
         serverSite.append("/api/latest");
-        std::cout << serverSite << std::endl;
     };
     // Inherited via BpmCommunicationManager
     virtual bool setupCommunication() override;
@@ -39,5 +38,5 @@ private:
     bool updateEchoMessage = false;
 };
 
-
+//callback function that transfers received JSON string to the result string
 std::size_t getCallback(const char* in, std::size_t size, std::size_t num, std::string* out);

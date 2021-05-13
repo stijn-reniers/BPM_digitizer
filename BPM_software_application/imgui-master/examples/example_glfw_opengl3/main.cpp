@@ -49,8 +49,6 @@ using namespace gl;
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-
-
 int bdrate = 115200;
 uint16_t plotMax;
 float plotF[plotSize];
@@ -61,6 +59,8 @@ uint16_t* plot;
 char titleParameters[7][40] = { "Peak left edge" , "Peak centre" , "Peak right edge","Peak deviation", "Beam intensity","Beam FWHM","Beam skewness" };
 int plotUpdateFreq=10;
 std::string message;
+bool dcOffset = false;
+bool newBool = false;
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
@@ -87,8 +87,6 @@ int main(int, char**)
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
 
     // Create window with graphics context
@@ -126,19 +124,16 @@ int main(int, char**)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Our state
-    bool show_demo_window = false;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -153,6 +148,7 @@ int main(int, char**)
         std::cin >> com;
         if(com>0)
             comManager = new BpmRs232Manager(com-1);
+        std::cout << "Please reset the BPM analyzer." << std::endl;
 
     }
     else if (choise == 2) {
@@ -166,7 +162,6 @@ int main(int, char**)
     else {
         return 0;
     }
-    
     // Open COM connection and start thread
     if (!comManager->setupCommunication()) {
         return 0;
@@ -177,26 +172,13 @@ int main(int, char**)
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
-
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // parameter display in table
+        //display beam parameters in a table
         {
-            static float f = 0.0f;
-            static int counter = 0;
             ImVec2 size{ 1800,900 };
             static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
             ImGui::Begin("BPM monitor");
@@ -209,6 +191,7 @@ int main(int, char**)
                 ImGui::TableNextColumn();
                 ImGui::TableHeader("Y crossection");
                 uint16_t* positions = comManager->getBeamLocation();
+                //beam positions
                 for (int row = 0; row < 3; row++) {
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
@@ -254,6 +237,7 @@ int main(int, char**)
                 ImGui::Text("%f", skewness[1]);
                 ImGui::EndTable();
             }
+
             // collector plot display
             {
                 if (comManager->newPlotDataAvailable()) {
@@ -278,7 +262,7 @@ int main(int, char**)
             // trigger delay update field
             ImGui::InputInt("Trigger Delay", &triggerDelay);
             ImGui::SameLine();
-            if (ImGui::Button("Update Delay")) {
+            if (ImGui::Button("Update Delay")) { // only allow delay's within a certain range
                 if (triggerDelay > 60) {
                     triggerDelay = 60;
                 }
@@ -286,6 +270,12 @@ int main(int, char**)
                     triggerDelay = 0;
                 }
                 comManager->updateTriggerDelay(triggerDelay);
+            }
+
+            ImGui::Checkbox("DC-correction", &dcOffset);
+            if (dcOffset != newBool) {
+                comManager->updateDcCorrection(dcOffset);
+                newBool = dcOffset;
             }
 
             // extra text

@@ -7,23 +7,36 @@
 class BpmCommunicationManager
 {
 public:
+    //interface functions
+    /* Function that is called before the start op data acquisition
+    * This function should initiate the communication medium*/
     virtual bool setupCommunication() = 0;
+
+    /* Function that is called by a second thread, this function should keep repeating
+    * until bool running = false. It is supposed to fetch the beam parameters, collector plot and should also check
+    * wether or not the board settings need to be updated*/
     virtual void requestData()=0;
+    /* Final function that is called after running has been set to false, this function should
+    * should clean up the communication medium*/
     virtual void cleanUpCommunication() = 0;
-    std::string_view getEcchoMessage() { return ecchoMessage; };
+
+    //beam parameter getters
     uint16_t* getBeamLocation() { return beamLocation; };
     float* getDeviation() { return deviation; };
     uint32_t* getIntensity() { return &intensity; };
     uint16_t* getFwhm() { return fwhm; };
     float* getSkewness() { return skewness; };
-
-    bool newPlotDataAvailable() { return plotDataAvailable; };
-    void setPlotDataAvailable(bool status) { plotDataAvailable = status; };
     uint16_t* getPlot() { return plot; };
 
+    //functions that link the GUI with the second thread
+    std::string_view getEcchoMessage() { return ecchoMessage; };
+    bool newPlotDataAvailable() { return plotDataAvailable; };
+    void setPlotDataAvailable(bool status) { plotDataAvailable = status; };
     void setRunning(bool status) { running = status; };
     void setPlotUpdateFrequency(int freq) { plotUpdateFrequency = freq; };
     void updateTriggerDelay(int delay) { newTriggerDelay = true; triggerDelay = delay; };
+    void updateDcCorrection(bool status) { dcCorrection = status; newDcCorrection = true; }
+
 protected:
     std::string ecchoMessage="";
     uint16_t beamLocation[6] = { 0 };
@@ -37,6 +50,7 @@ protected:
     int plotUpdateFrequency = 0;
     bool newTriggerDelay = false;
     int triggerDelay = 0;
-
+    bool dcCorrection = false;
+    bool newDcCorrection = false;
 };
 

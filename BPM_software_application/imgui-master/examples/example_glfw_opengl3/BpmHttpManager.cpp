@@ -36,9 +36,7 @@ void BpmHttpManager::requestData()
         }
         else {
             parameterGet();
-            //ecchoMessage = "Plot updated";
         }
-        
         counter++;
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -126,7 +124,6 @@ void BpmHttpManager::jsonParseParameters()
     fwhm[0] = *j.find("fwhm_x");
     fwhm[1] = *j.find("fwhm_y");
     if (updateEchoMessage) {
-        std::cout << "entered" << std::endl;
         int delay = *j.find("trigger_delay");
         ecchoMessage = "echo recieved, trigger delay is now ";
         ecchoMessage.append(std::to_string(delay));
@@ -139,7 +136,6 @@ void BpmHttpManager::jsonParsePlot()
 {
     j = json::parse(result.c_str());
     std::string data = (*j.find("data"));
-    std::cout << "data length: " << data.length() << std::endl;
     std::replace(data.begin(), data.end(), ';', ' ');
     std::stringstream ss(data);
     int i = 0;
@@ -164,7 +160,6 @@ void BpmHttpManager::triggerDelayPost()
     std::string body = "{  \"request_id\" : \"3\",  \"set_trigger_delay\" : ";
     body.append(std::to_string(triggerDelay));
     body.append("}");
-    std::cout << body << std::endl;
 
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
 
@@ -233,7 +228,6 @@ std::size_t getCallback(const char* in, std::size_t size, std::size_t num, std::
     const std::size_t totalBytes(size * num);
     // *out = json::parse(in);
     (*out).append(in);
-    std::cout << (*out).length() << std::endl;
     return totalBytes;
 }
 

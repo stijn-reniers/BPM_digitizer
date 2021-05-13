@@ -13,7 +13,7 @@
 
 /** Configuration parameter array, with following configuration settings in order
 	1.	Trigger offset/delay (in ms) with respect to fiducial
-	2.	Trigger level 
+	2.	Peak detection threshold
 	3.	Send flag for beam parameters
 	4.	Send flag for plot data
 	5.	Correct DC offset automatically
