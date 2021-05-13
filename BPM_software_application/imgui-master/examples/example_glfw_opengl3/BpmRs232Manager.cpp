@@ -76,13 +76,13 @@ void BpmRs232Manager::recieveParameters()
 void BpmRs232Manager::requestPlot()
 {
     unsigned char buf[255];
-    RS232_flushRXTX(cport_nr);
+    //RS232_flushRXTX(cport_nr);
     Sleep(100);
     RS232_PollComport(cport_nr, buf, 255);
     RS232_SendByte(cport_nr, 255);
     RS232_SendByte(cport_nr, 3);
     RS232_SendByte(cport_nr, 255);
-    Sleep(2000);                                                                    //wait for the plot data to become available
+    Sleep(3000);                                                                    //wait for the plot data to become available
     RS232_PollComport(cport_nr, buf, 2);
     int n = RS232_PollComport(cport_nr, ((unsigned char*)plot), 16668);
     std::cout << n << std::endl;
@@ -93,7 +93,7 @@ void BpmRs232Manager::changeTriggerDelay()
 {
     //clear buffer
     unsigned char buf[255];
-    RS232_flushRXTX(cport_nr);
+    //RS232_flushRXTX(cport_nr);
     Sleep(100);
     RS232_PollComport(cport_nr, buf, 255);
 
