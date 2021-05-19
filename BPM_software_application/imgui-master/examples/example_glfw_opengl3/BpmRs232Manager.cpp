@@ -24,6 +24,10 @@ void BpmRs232Manager::requestData()
             setDcCorrection();
             newDcCorrection = false;
         }
+        if (newPeakThreshold) {
+            changePeakThreshold(),
+            newPeakThreshold = false;
+        }
         if (counter >= plotUpdateFrequency && connected) {
             requestPlot();
             ecchoMessage = "Plot updated";
@@ -105,6 +109,11 @@ void BpmRs232Manager::changeTriggerDelay()
     editSettings(triggerDelay, 0);
 }
 
+void BpmRs232Manager::changePeakThreshold()
+{
+    editSettings(peakThreshold, 1);
+}
+
 void BpmRs232Manager::editSettings(char sendValue, char commandIndex)
 {
     //clear rs232 buffer
@@ -132,6 +141,11 @@ void BpmRs232Manager::editSettings(char sendValue, char commandIndex)
             ecchoMessage.append(std::to_string(buf[2]));
             ecchoMessage.append("ms");
         }
+        if (commandIndex == 1 && buf[1] == 1) {
+            std::cout << "command recognized" << std::endl;
+            ecchoMessage = "eccho message received peak threshold has now been set to = ";
+            ecchoMessage.append(std::to_string(buf[2]));
+        }
         if (commandIndex == 4 && buf[1] == 4) {
             if (buf[2] == 255) {
                 ecchoMessage = "DC compensation enabled.";
@@ -141,6 +155,7 @@ void BpmRs232Manager::editSettings(char sendValue, char commandIndex)
                 ecchoMessage = "DC compensation disabled.";
             }
         }
+
     }
     else {
         ecchoMessage = "failed to recognize eccho message";

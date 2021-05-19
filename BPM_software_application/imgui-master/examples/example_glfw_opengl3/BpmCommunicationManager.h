@@ -35,6 +35,7 @@ public:
     void setRunning(bool status) { running = status; };
     void setPlotUpdateFrequency(int freq) { plotUpdateFrequency = freq; };
     void updateTriggerDelay(int delay) { newTriggerDelay = true; triggerDelay = delay; };
+    void updatePeakThreshold(int threshold) { newPeakThreshold = true; peakThreshold = threshold; };
     void updateDcCorrection(bool status) { dcCorrection = status; newDcCorrection = true; }
 
 protected:
@@ -49,7 +50,9 @@ protected:
     bool running = true;
     int plotUpdateFrequency = 0;
     bool newTriggerDelay = false;
+    bool newPeakThreshold = false;
     int triggerDelay = 0;
+    int peakThreshold = 0;
     bool dcCorrection = false;
     bool newDcCorrection = false;
 };

@@ -530,12 +530,12 @@ void set_peaks(void)
 {
 	for(uint16_t i = peak_location[1][cycle]; i < peak_location[2][cycle];i++)
 	{
-		algorithm_buffer[i] -= avg_dc_offset;
+		algorithm_buffer[i] -= 2048-current_offset;
 	}
 	
 	for(uint16_t i = peak_location[4][cycle]; i < peak_location[5][cycle];i++)
 	{
-		algorithm_buffer[i] -= avg_dc_offset;
+		algorithm_buffer[i] -= 2048-current_offset;
 	}
 }
 
@@ -545,11 +545,11 @@ void reset_peaks(void)
 {
 	for(uint16_t i = peak_location[1][cycle]; i < peak_location[2][cycle];i++)
 	{
-		algorithm_buffer[i] += avg_dc_offset;
+		algorithm_buffer[i] += 2048-current_offset;
 	}
 	
 	for(uint16_t i = peak_location[4][cycle]; i < peak_location[5][cycle];i++)
 	{
-		algorithm_buffer[i] += avg_dc_offset;
+		algorithm_buffer[i] += 2048-current_offset;
 	}
 }

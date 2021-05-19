@@ -21,9 +21,10 @@ public:
     void recieveParameters();
     void requestPlot();
     void changeTriggerDelay();
+    void changePeakThreshold();
+    void setDcCorrection();
     // function that sends a certain command to the ATMEL board and expects an eccho back
     void editSettings(char sendValue, char commandIndex);
-    void setDcCorrection();
 private:
     int baudRate = 115200;
     int cport_nr = 3;

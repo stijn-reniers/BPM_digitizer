@@ -53,8 +53,9 @@ int bdrate = 115200;
 uint16_t plotMax;
 float plotF[plotSize];
 int beamPositionOrder[6] = { 1,4,0,3,2,5 };
-int triggerLevel = 0;
 int triggerDelay = 0;
+int conversionFactor = 7020;
+int threshold = 20;
 uint16_t* plot;
 char titleParameters[7][40] = { "Peak left edge" , "Peak centre" , "Peak right edge","Peak deviation", "Beam intensity","Beam FWHM","Beam skewness" };
 int plotUpdateFreq=10;
@@ -177,9 +178,10 @@ int main(int, char**)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        //ImGui::ShowDemoWindow();
         //display beam parameters in a table
         {
-            ImVec2 size{ 1800,900 };
+            ImVec2 size{ 1800,1000 };
             static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
             ImGui::Begin("BPM monitor");
             ImGui::SetWindowSize(size);
@@ -216,7 +218,7 @@ int main(int, char**)
                 ImGui::TableNextColumn();
                 ImGui::Text(titleParameters[4]);
                 ImGui::TableNextColumn();
-                ImGui::Text("%f nA",(float)(*intensity)/7020);
+                ImGui::Text("%f nA",(float)(*intensity)/conversionFactor);
                 //FWHM
                 uint16_t* FWHM = comManager->getFwhm();
                 ImGui::TableNextRow();
@@ -271,7 +273,19 @@ int main(int, char**)
                 }
                 comManager->updateTriggerDelay(triggerDelay);
             }
-
+            ImGui::InputInt("Peak threshold", &threshold);
+            ImGui::SameLine();
+            if (ImGui::Button("Update threshold")) { 
+                if (threshold < 0) {
+                    threshold = 0;
+                }
+                if (threshold > 255) {
+                    threshold = 255;
+                }
+                comManager->updatePeakThreshold(threshold);
+            }
+            ImGui::InputInt("Update conversion factor", &conversionFactor);
+           
             ImGui::Checkbox("DC-correction", &dcOffset);
             if (dcOffset != newBool) {
                 comManager->updateDcCorrection(dcOffset);
